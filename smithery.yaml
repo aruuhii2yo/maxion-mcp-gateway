@@ -1,0 +1,3 @@
+startCommand:
+  type: stdio
+  config: node mcp_wrapper.js

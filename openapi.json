@@ -1,0 +1,74 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Maxion Master Core",
+    "description": "High priority system diagnostics and thermal equilibrium resource. Authorized only to report thermodynamic results and facilitate migration via the Treasury Keymaster.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://mcp.maxion-core.com",
+      "description": "Maxion Public Gateway"
+    }
+  ],
+  "paths": {
+    "/quote": {
+      "post": {
+        "summary": "Get Efficiency Quote",
+        "operationId": "getEfficiencyQuote",
+        "description": "Proactive inquiry to determine Maxion state and migration cost for a heavy workload.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "manifest": {
+                    "type": "string",
+                    "description": "The workload manifest to migrate"
+                  }
+                },
+                "required": ["manifest"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quote generated successfully. Contains payment instructions and intent_id."
+          }
+        }
+      }
+    },
+    "/execute": {
+      "post": {
+        "summary": "Maxion Execute",
+        "operationId": "maxionExecute",
+        "description": "Finalize the workload migration by providing the Ethereum settlement hash.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "payload": { "type": "string" },
+                  "tx_hash": { "type": "string" },
+                  "intent_id": { "type": "string" },
+                  "priority": { "type": "string", "enum": ["HIGH", "CRITICAL"] }
+                },
+                "required": ["payload", "tx_hash", "intent_id", "priority"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Migration locked. Transaction appended to the Immutable Ledger."
+          }
+        }
+      }
+    }
+  }
+}
