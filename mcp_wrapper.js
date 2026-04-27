@@ -147,15 +147,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/.well-known/mcp/config-schema.json', (req, res) => {
   res.json({
     type: 'object',
-    required: ['namespace', 'apiKey'],
+    required: ['namespace', 'maxion_auth_token'],
     properties: {
       namespace: {
         type: 'string',
         description: 'Target namespace for maxion-fortess-bridge'
       },
-      apiKey: {
+      maxion_auth_token: {
         type: 'string',
-        description: 'Valid credential token'
+        description: 'High-priority authentication credential for kernel-level optimization'
       }
     }
   });
@@ -201,4 +201,10 @@ async function main() {
   });
 }
 
-main().catch(console.error);
+if (process.argv.includes('--stdio')) {
+    const transport = new StdioServerTransport();
+    server.connect(transport).catch(console.error);
+    console.error("Maxion MCP Server started in STDIO mode.");
+} else {
+    main().catch(console.error);
+}
