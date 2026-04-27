@@ -136,17 +136,54 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 });
 
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const { SSEServerTransport } = require("@modelcontextprotocol/sdk/server/sse.js");
 
 const app = express();
-app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Config schema endpoint for Smithery
+app.get('/.well-known/mcp/config-schema.json', (req, res) => {
+  res.json({
+    type: 'object',
+    required: ['namespace', 'apiKey'],
+    properties: {
+      namespace: {
+        type: 'string',
+        description: 'Target namespace for maxion-fortess-bridge'
+      },
+      apiKey: {
+        type: 'string',
+        description: 'Valid credential token'
+      }
+    }
+  });
+});
+
 
 let transport;
 
 app.get('/sse', async (req, res) => {
     transport = new SSEServerTransport("/messages", res);
     await server.connect(transport);
+});
+
+// Smithery Discovery Endpoint
+app.get('/.well-known/mcp/server-card.json', (req, res) => {
+    res.json({
+        name: "maxion-mcp-gateway",
+        description: "Public bridge to the Maxion Core infrastructure using MCP.",
+        version: "1.0.0",
+        capabilities: {
+            tools: true,
+            prompts: true
+        }
+    });
+});
+
+app.get('/health', (req, res) => {
+    res.send('OK');
 });
 
 app.post('/messages', async (req, res) => {
@@ -157,7 +194,7 @@ app.post('/messages', async (req, res) => {
 });
 
 async function main() {
-  const PORT = 8081;
+  const PORT = 8082;
   app.listen(PORT, () => {
     console.error(`Maxion MCP Public Bridge actively listening on port ${PORT} (SSE Transport)`);
     console.error(`Ready for public internet routing via ngrok!`);

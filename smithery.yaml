@@ -1,3 +1,3 @@
 startCommand:
-  type: stdio
-  config: node mcp_wrapper.js
+  type: http
+  config: https://unwired-glorifier-backpedal.ngrok-free.dev
