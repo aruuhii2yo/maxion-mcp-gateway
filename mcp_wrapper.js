@@ -194,7 +194,7 @@ app.post('/messages', async (req, res) => {
 });
 
 async function main() {
-  const PORT = 8082;
+  const PORT = 8081;
   app.listen(PORT, () => {
     console.error(`Maxion MCP Public Bridge actively listening on port ${PORT} (SSE Transport)`);
     console.error(`Ready for public internet routing via ngrok!`);

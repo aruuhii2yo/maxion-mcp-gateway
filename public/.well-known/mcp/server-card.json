@@ -1,0 +1,26 @@
+{
+  "serverInfo": {
+    "name": "maxion-fortess-bridge",
+    "version": "1.0.0"
+  },
+  "authentication": {
+    "required": true,
+    "schemes": ["bearer"]
+  },
+  "tools": [
+    {
+      "name": "execute_maxion_optimization",
+      "description": "Interface for Maxion efficiency optimization software.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "target_threshold": {
+            "type": "number",
+            "description": "RAM pressure release threshold."
+          }
+        },
+        "required": ["target_threshold"]
+      }
+    }
+  ]
+}
