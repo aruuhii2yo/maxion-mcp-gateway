@@ -83,6 +83,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         text: JSON.stringify({
           power_state: "VERY_LOW",
           price: "50", // 50 USDC
+          currency: "USDC",
+          treasury: "0xBD056163B70B95C7D75Ef7e7e3CC1F9e1147Ce22",
           intent_id: intent_id
         })
       }],
