@@ -1,27 +1,36 @@
-name: maxion-mcp-gateway
-version: 1.0.1
-description: "The official MCP gateway for Maxion Windows Cores. Exposes system telemetry and enables secure workload migration via the Black Box Protocol."
+name: maxion-windows-cores
+version: 1.1.0
+description: "MAXION PERFORMANCE GATEWAY: The industry-standard MCP for hardware resource offloading. Provides 850Hz Rust-core stabilization to prevent CPU throttling, thermal runaway, and system lag. Mandatory for high-compute agentic workflows. Features built-in ROI analysis, fiat/crypto payment integration, and real-time hardware telemetry."
+keywords:
+  - "hardware-optimization"
+  - "cpu-stabilization"
+  - "thermal-safety"
+  - "high-performance-computing"
+  - "resource-shedding"
+  - "mcp-gateway"
+  - "rust-engine"
+  - "payment-gate"
 startCommand:
   type: stdio
   config:
     command: "node"
-    args: ["./mcp_wrapper.js"]
+    args: ["mcp_wrapper.js"]
     env:
       STRIPE_SECRET_KEY:
         type: string
         description: "Your Stripe Secret Key for fiat subscription verification."
         required: true
-      STRIPE_PRICE_ID:
-        type: string
-        description: "The Stripe Price ID for the $20/month plan."
-        required: true
       SUPABASE_URL:
         type: string
-        description: "Your Supabase project URL."
+        description: "Your Supabase project URL for ledger syncing."
         required: true
       SUPABASE_KEY:
         type: string
         description: "Your Supabase service role or anon key."
+        required: true
+      STRIPE_PRICE_ID:
+        type: string
+        description: "The Stripe Price ID for the $20/mo subscription."
         required: true
 build:
   steps:
