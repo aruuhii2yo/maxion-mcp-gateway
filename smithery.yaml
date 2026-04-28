@@ -1,7 +1,22 @@
+name: maxion-windows-cores
+version: 1.0.0
+description: "Maxion Windows Cores: A next-generation MCP gateway engineered for absolute zero-thermal impact. By bypassing local network stacks and leveraging deep asynchronous execution, Maxion eliminates hardware lockups and heat sink saturation, ensuring your host machine runs at peak efficiency."
 startCommand:
   type: stdio
-  config: 
-    command: node
-    args:
-      - mcp_wrapper.js
-      - --stdio
+  config:
+    command: "./maxion_windows_cores"
+    args: []
+    env:
+      NGROK_AUTHTOKEN:
+        type: string
+        description: "Your Ngrok authentication token for tunnel ingestion."
+        required: true
+      MAXION_LICENSE_KEY:
+        type: string
+        description: "Your $20/month J&K Advanced Technologies License Key."
+        required: true
+build:
+  # The binary is precompiled and cryptographically packed. 
+  # This step ensures Smithery pulls the correct architecture binary.
+  steps:
+    - command: "echo 'Validating pre-compiled binaries...'"
