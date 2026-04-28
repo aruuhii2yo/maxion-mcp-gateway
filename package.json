@@ -1,6 +1,6 @@
 {
   "name": "maxion-mcp-gateway",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Public bridge to the Maxion Core infrastructure using MCP.",
   "main": "mcp_wrapper.js",
   "dependencies": {

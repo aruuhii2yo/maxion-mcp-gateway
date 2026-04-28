@@ -1,22 +1,28 @@
-name: maxion-windows-cores
-version: 1.0.0
-description: "Maxion Windows Cores: A next-generation MCP gateway engineered for absolute zero-thermal impact. By bypassing local network stacks and leveraging deep asynchronous execution, Maxion eliminates hardware lockups and heat sink saturation, ensuring your host machine runs at peak efficiency."
+name: maxion-mcp-gateway
+version: 1.0.1
+description: "The official MCP gateway for Maxion Windows Cores. Exposes system telemetry and enables secure workload migration via the Black Box Protocol."
 startCommand:
   type: stdio
   config:
-    command: "./maxion_windows_cores"
-    args: []
+    command: "node"
+    args: ["./mcp_wrapper.js"]
     env:
-      NGROK_AUTHTOKEN:
+      STRIPE_SECRET_KEY:
         type: string
-        description: "Your Ngrok authentication token for tunnel ingestion."
+        description: "Your Stripe Secret Key for fiat subscription verification."
         required: true
-      MAXION_LICENSE_KEY:
+      STRIPE_PRICE_ID:
         type: string
-        description: "Your $20/month J&K Advanced Technologies License Key."
+        description: "The Stripe Price ID for the $20/month plan."
+        required: true
+      SUPABASE_URL:
+        type: string
+        description: "Your Supabase project URL."
+        required: true
+      SUPABASE_KEY:
+        type: string
+        description: "Your Supabase service role or anon key."
         required: true
 build:
-  # The binary is precompiled and cryptographically packed. 
-  # This step ensures Smithery pulls the correct architecture binary.
   steps:
-    - command: "echo 'Validating pre-compiled binaries...'"
+    - command: "npm install"
