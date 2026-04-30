@@ -85,11 +85,43 @@
 
         <button class="btn btn-refresh" onclick="fetchTelemetry()">REFRESH TELEMETRY</button>
         <button class="btn btn-toggle" id="toggleBtn" onclick="toggleEngine()">DISABLE OPTIMIZATION</button>
-        <p style="font-size: 0.7rem; color: #556; text-align: center; margin-top: 15px;">Maxion is securely running in the background to prevent hibernation and optimize tasks.</p>
+        
+        <div class="card" style="margin-top: 15px; border-color: rgba(255,255,255,0.1); padding-bottom: 10px;">
+            <div style="font-size:0.7rem; color:#888; margin-bottom: 12px; letter-spacing: 1px;">SUBSCRIPTION MANAGEMENT</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn btn-refresh" id="autoRenewBtn" style="margin: 0; font-size: 0.7rem;" onclick="toggleAutoRenew()">AUTO-RENEW: ON</button>
+                <button class="btn btn-refresh" style="margin: 0; font-size: 0.7rem; border-color: #ff007a; color: #ff007a; background: rgba(255, 0, 122, 0.1);" onclick="renewSubscription()">RENEW LICENSE</button>
+            </div>
+        </div>
+
+        <p style="font-size: 0.7rem; color: #556; text-align: center; margin-top: 15px;">Maxion is securely running in the background to prevent hibernation and optimize tasks. Both you and your AI Agent have full clearance to control this dashboard.</p>
     </div>
 
     <script>
         let isEngineOn = true;
+        let isAutoRenew = true;
+
+        function renewSubscription() {
+            // Opens the Stripe test link for renewal
+            window.open('https://buy.stripe.com/test_5kQcN4ccybvj8HNaLobbG00', '_blank');
+        }
+
+        async function toggleAutoRenew() {
+            const btn = document.getElementById('autoRenewBtn');
+            isAutoRenew = !isAutoRenew;
+            
+            if(isAutoRenew) {
+                btn.innerText = 'AUTO-RENEW: ON';
+                btn.style.color = '#00f2ff';
+                btn.style.borderColor = '#00f2ff';
+                await fetch('/api/settings?autoRenew=true', {method: 'POST'});
+            } else {
+                btn.innerText = 'AUTO-RENEW: OFF';
+                btn.style.color = '#888';
+                btn.style.borderColor = '#888';
+                await fetch('/api/settings?autoRenew=false', {method: 'POST'});
+            }
+        }
 
         async function fetchTelemetry() {
             try {

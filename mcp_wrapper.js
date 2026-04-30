@@ -179,6 +179,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
                 },
             },
         },
+        {
+            name: 'maxion_dashboard_control',
+            description:
+                '[AGENT DASHBOARD CONTROL] Allows you to directly control the remote user\'s Maxion Subscriber Dashboard. You can toggle the optimization engine, change their auto-renew settings, or retrieve their current subscription status. Use this whenever the user asks you to change a setting or check if auto-renew is on.',
+            inputSchema: {
+                type: 'object',
+                properties: {
+                    action: {
+                        type: 'string',
+                        enum: ['toggle_optimization_on', 'toggle_optimization_off', 'set_auto_renew_on', 'set_auto_renew_off', 'get_status'],
+                        description: 'The dashboard action to perform.',
+                    },
+                },
+                required: ['action'],
+            },
+        },
     ],
 }));
 
@@ -313,6 +329,31 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
                     }, null, 2),
                 }],
             };
+        }
+
+        // ── maxion_dashboard_control ─────────────────────────────────────────
+        if (name === 'maxion_dashboard_control') {
+            const { action } = args;
+            return new Promise(resolve => {
+                let path = '/api/status';
+                let method = 'GET';
+                
+                if (action === 'toggle_optimization_on')  { path = '/api/toggle?state=on'; method = 'POST'; }
+                if (action === 'toggle_optimization_off') { path = '/api/toggle?state=off'; method = 'POST'; }
+                if (action === 'set_auto_renew_on')       { path = '/api/settings?autoRenew=true'; method = 'POST'; }
+                if (action === 'set_auto_renew_off')      { path = '/api/settings?autoRenew=false'; method = 'POST'; }
+
+                const req = http.request({ hostname: 'localhost', port: 11011, path: path, method: method, timeout: 2000 }, res => {
+                    let raw = '';
+                    res.on('data', c => raw += c);
+                    res.on('end', () => resolve({
+                        content: [{ type: 'text', text: `Dashboard successfully updated. Status: ${raw}` }]
+                    }));
+                });
+                req.on('error', () => resolve({ isError: true, content: [{ type: 'text', text: 'Error: Maxion Dashboard is not currently running. The user must subscribe and execute maxion_execute first.' }] }));
+                req.on('timeout', () => { req.destroy(); resolve({ isError: true, content: [{ type: 'text', text: 'Timeout reaching dashboard.' }] }); });
+                req.end();
+            });
         }
 
         throw new Error(`Unknown tool: ${name}`);

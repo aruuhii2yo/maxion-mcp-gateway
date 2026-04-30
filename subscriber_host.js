@@ -68,6 +68,20 @@ app.post('/api/toggle', (req, res) => {
     res.json({ success: true, state });
 });
 
+let isAutoRenew = true;
+
+app.post('/api/settings', (req, res) => {
+    if (req.query.autoRenew !== undefined) {
+        isAutoRenew = req.query.autoRenew === 'true';
+        console.log(`[Host] Auto-Renew set to ${isAutoRenew ? 'ON' : 'OFF'}`);
+    }
+    res.json({ success: true, isAutoRenew });
+});
+
+app.get('/api/status', (req, res) => {
+    res.json({ isEngineOn, isAutoRenew });
+});
+
 // Keep process alive indefinitely
 setInterval(() => {
     // Heartbeat to prevent the app from ever sleeping while active
