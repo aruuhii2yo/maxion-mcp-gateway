@@ -168,9 +168,9 @@ app.listen(PORT, () => {
     
     if (process.platform === 'win32') {
         // Launch as a standalone borderless native app using Edge/Chrome
-        exec(`start msedge --app=${startUrl}`, (err) => {
+        exec(`start msedge --app=${startUrl} --window-size=400,720`, (err) => {
             if (err) {
-                exec(`start chrome --app=${startUrl}`, (err2) => {
+                exec(`start chrome --app=${startUrl} --window-size=400,720`, (err2) => {
                     if (err2) exec(`start ${startUrl}`); // Fallback to normal browser
                 });
             }
