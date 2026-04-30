@@ -159,6 +159,14 @@
         pointer-events: none;
         text-align: center;
     }
+    .live-indicator {
+        display: inline-block; width: 6px; height: 6px; background: #ff007a; border-radius: 50%; margin-left: 4px; vertical-align: middle;
+        animation: flashRed 1s infinite;
+    }
+    @keyframes flashRed {
+        0%, 100% { opacity: 1; box-shadow: 0 0 5px #ff007a; }
+        50% { opacity: 0.3; box-shadow: none; }
+    }
 </style>
 </head>
 <body>
@@ -188,7 +196,7 @@
                 <div class="val" id="mem">--%</div>
             </div>
             <div class="card">
-                <div style="font-size:0.7rem; color:#888;">CORE TEMP</div>
+                <div style="font-size:0.7rem; color:#888;">CORE TEMP <span class="live-indicator"></span></div>
                 <div class="val" id="temp" style="font-size: 1.1rem;">--°C</div>
             </div>
         </div>
@@ -377,7 +385,7 @@
         window.onload = () => {
             fetchStatus();
             fetchTelemetry();
-            setInterval(fetchTelemetry, 3000);
+            setInterval(fetchTelemetry, 1200);
 
             // Show welcome toast for 5 seconds on boot
             setTimeout(() => {
