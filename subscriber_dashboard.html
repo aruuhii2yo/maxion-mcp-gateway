@@ -39,7 +39,7 @@
             <p style="font-size:0.8rem; color:#888;">Ecological Optimization Active</p>
         </div>
 
-        <div class="grid">
+        <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
             <div class="card">
                 <div style="font-size:0.7rem; color:#888;">CPU LOAD</div>
                 <div class="val" id="cpu">--%</div>
@@ -47,6 +47,21 @@
             <div class="card">
                 <div style="font-size:0.7rem; color:#888;">MEMORY</div>
                 <div class="val" id="mem">--%</div>
+            </div>
+            <div class="card">
+                <div style="font-size:0.7rem; color:#888;">CORE TEMP</div>
+                <div class="val" id="temp">--°C</div>
+            </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns: 1fr 1fr; margin-top:-5px;">
+            <div class="card" style="border-color: rgba(0,242,255,0.2);">
+                <div style="font-size:0.7rem; color:#00f2ff; letter-spacing:1px;">HOURS GAINED</div>
+                <div class="val" id="hours" style="color:#00f2ff;">--</div>
+            </div>
+            <div class="card" style="border-color: rgba(0,242,255,0.2);">
+                <div style="font-size:0.7rem; color:#00f2ff; letter-spacing:1px;">ENERGY SAVED</div>
+                <div class="val" id="energy" style="color:#00f2ff;">-- W</div>
             </div>
         </div>
 
@@ -64,9 +79,13 @@
                 const data = await res.json();
                 document.getElementById('cpu').innerText = data.cpuLoad + '%';
                 document.getElementById('mem').innerText = data.memoryUsage + '%';
+                document.getElementById('temp').innerText = data.temperature + '°C';
+                document.getElementById('hours').innerText = data.hoursGained;
+                document.getElementById('energy').innerText = data.energySaved + ' W';
             } catch(e) {
                 document.getElementById('cpu').innerText = 'ERR';
                 document.getElementById('mem').innerText = 'ERR';
+                document.getElementById('temp').innerText = 'ERR';
             }
         }
 
