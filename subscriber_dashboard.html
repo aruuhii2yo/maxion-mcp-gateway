@@ -178,11 +178,11 @@
     <div class="alien"></div>
     <div class="lightning"></div>
     
-    <div id="toast">WELCOME TO MAXION CORE<br><span style="font-size:0.65rem; color:#aaa; font-weight:normal;">Thank you for trying our ecosystem. Your free trial is active.</span></div>
+    <div id="toast">WELCOME TO MAXION CORE<br><span style="font-size:0.65rem; color:#aaa; font-weight:normal;">Thank you for trying our ecosystem. Your 1-Hour Free Trial is active.</span></div>
 
     <div class="container">
         <div class="header">
-            <h2 class="glow-text"><span style="color:#39ff14; text-shadow: 0 0 15px #39ff14;">⚡</span> MAXION CORE</h2>
+            <h2 class="glow-text"><span style="color:#39ff14; text-shadow: 0 0 15px #39ff14;">⚡</span> MAXION CORE <span style="margin-left:8px; padding:2px 6px; background:rgba(0,242,255,0.2); border:1px solid #00f2ff; border-radius:4px; font-size:0.5rem; color:#00f2ff; letter-spacing:0px; vertical-align: middle;">1 HOUR TRIAL</span></h2>
             <p style="font-size:0.7rem; color:#888; margin-top: 4px; margin-bottom: 0;">Ecological Optimization Active</p>
         </div>
 
@@ -339,7 +339,21 @@
                 document.getElementById('tempBar').style.width = tempPercent + '%';
 
                 const statusEl = document.getElementById('tempStatus');
-                if (isEngineOn) {
+                const toggleBtn = document.getElementById('toggleBtn');
+
+                if (data.trialExpired) {
+                    isEngineOn = false;
+                    statusEl.innerText = "TRIAL EXPIRED";
+                    statusEl.style.color = "#ff0000";
+                    document.getElementById('tempBar').style.background = "linear-gradient(90deg, #ff9a00, #ff0000)";
+                    
+                    toggleBtn.className = 'btn btn-toggle off';
+                    toggleBtn.innerText = 'TRIAL EXPIRED - CLICK TO RENEW';
+                    toggleBtn.style.background = 'linear-gradient(90deg, #ff0000, #990000)';
+                    toggleBtn.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.6)';
+                    toggleBtn.style.color = '#fff';
+                    toggleBtn.onclick = renewSubscription;
+                } else if (isEngineOn) {
                     statusEl.innerText = "MAXION ENGAGED";
                     statusEl.style.color = "#00f2ff";
                     document.getElementById('tempBar').style.background = "linear-gradient(90deg, #00f2ff, #0088ff)";
@@ -361,7 +375,7 @@
             // Keep loading state briefly for visual feedback
             setTimeout(() => {
                 if (btn) {
-                    btn.innerText = "REFRESH TELEMETRY";
+                    btn.innerText = "REFRESH";
                     btn.disabled = false;
                 }
             }, 500);
@@ -369,12 +383,19 @@
 
         async function toggleEngine() {
             const btn = document.getElementById('toggleBtn');
+            if (btn.innerText.includes('EXPIRED')) {
+                renewSubscription();
+                return;
+            }
+            
             isEngineOn = !isEngineOn;
             
             if(isEngineOn) {
                 btn.className = 'btn btn-toggle';
                 btn.innerText = 'DISABLE OPTIMIZATION';
-                await fetch('/api/toggle?state=on', {method: 'POST'});
+                const r = await fetch('/api/toggle?state=on', {method: 'POST'});
+                const out = await r.json();
+                if (out.error === 'TRIAL_EXPIRED') isEngineOn = false;
             } else {
                 btn.className = 'btn btn-toggle off';
                 btn.innerText = 'ENABLE OPTIMIZATION';

@@ -78,27 +78,38 @@ app.get('/api/telemetry', async (req, res) => {
         const hoursActive = isEngineOn ? (Date.now() - engineStartTime) / 3600000 : 0;
         
         // Session ROI Math
-        const sessionHours = (hoursActive * 1.4).toFixed(3); 
-        const sessionEnergy = (hoursActive * 85).toFixed(2); 
+        const sessionHours = (hoursActive * 1.4); 
+        const sessionEnergy = (hoursActive * 85); 
+
+        // Trial Lockout Logic (1.0 Hours)
+        const TRIAL_LIMIT_HOURS = 1.0;
+        let trialExpired = (lifetimeStats.hours + sessionHours) >= TRIAL_LIMIT_HOURS;
+
+        if (isEngineOn && trialExpired) {
+            isEngineOn = false;
+            lifetimeStats.hours += sessionHours;
+            lifetimeStats.energy += sessionEnergy;
+            require('fs').writeFileSync(dbPath, JSON.stringify(lifetimeStats));
+            console.log('[Host] TRIAL LIMIT EXCEEDED! Maxion Engine forcefully halted.');
+        }
         
         // Other metrics throttle logic (update every 5s)
         const now = Date.now();
         if (now - lastOtherUpdate > 4800) {
-            lastCpu = load.toFixed(1);
-            lastMem = ((memData.active / memData.total) * 100).toFixed(1);
-            lastSessionHours = sessionHours;
-            lastSessionEnergy = sessionEnergy;
-            lastLifeHours = (lifetimeStats.hours + parseFloat(sessionHours)).toFixed(1);
-            lastLifeEnergy = (lifetimeStats.energy + parseFloat(sessionEnergy)).toFixed(1);
+            lastSessionHours = sessionHours.toFixed(3);
+            lastSessionEnergy = sessionEnergy.toFixed(2);
+            lastLifeHours = (lifetimeStats.hours + sessionHours).toFixed(1);
+            lastLifeEnergy = (lifetimeStats.energy + sessionEnergy).toFixed(1);
             lastOtherUpdate = now;
         }
 
         res.json({
-            cpuLoad: lastCpu,
-            memoryUsage: lastMem,
+            cpuLoad: load.toFixed(1),
+            memoryUsage: ((memData.active / memData.total) * 100).toFixed(1),
             temperature: estimatedTemp.toFixed(1),
             sessionHours: lastSessionHours, sessionEnergy: lastSessionEnergy,
-            lifeHours: lastLifeHours, lifeEnergy: lastLifeEnergy
+            lifeHours: lastLifeHours, lifeEnergy: lastLifeEnergy,
+            trialExpired: trialExpired
         });
     } catch (e) {
         res.status(500).json({ error: 'Failed to fetch telemetry' });
@@ -109,6 +120,9 @@ app.get('/api/telemetry', async (req, res) => {
 app.post('/api/toggle', (req, res) => {
     const state = req.query.state;
     if (state === 'on') {
+        if (lifetimeStats.hours >= 1.0) {
+            return res.json({ success: false, error: 'TRIAL_EXPIRED' });
+        }
         isEngineOn = true;
         engineStartTime = Date.now();
         console.log('[Host] Optimization ENABLED. Rust Engine Active.');
