@@ -113,8 +113,18 @@ setInterval(() => {
 app.listen(PORT, () => {
     console.log(`[Maxion] Subscriber Dashboard live on port ${PORT}`);
     
-    // Automatically open the user's default browser to the side tab
     const startUrl = `http://localhost:${PORT}`;
-    const startCmd = process.platform === 'win32' ? 'start' : (process.platform === 'darwin' ? 'open' : 'xdg-open');
-    exec(`${startCmd} ${startUrl}`);
+    
+    if (process.platform === 'win32') {
+        // Launch as a standalone borderless native app using Edge/Chrome
+        exec(`start msedge --app=${startUrl}`, (err) => {
+            if (err) {
+                exec(`start chrome --app=${startUrl}`, (err2) => {
+                    if (err2) exec(`start ${startUrl}`); // Fallback to normal browser
+                });
+            }
+        });
+    } else {
+        exec(`open "${startUrl}"`);
+    }
 });
