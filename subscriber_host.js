@@ -94,6 +94,29 @@ app.post('/api/settings', (req, res) => {
     res.json({ success: true, isAutoRenew });
 });
 
+let pulseProcess = null;
+app.post('/api/perimeter', (req, res) => {
+    const state = req.query.state;
+    if (state === 'on') {
+        if (!pulseProcess) {
+            const overlayPath = path.join(__dirname, '..', 'pulse_overlay.js');
+            pulseProcess = require('child_process').spawn('npx', ['electron', overlayPath], { detached: true, stdio: 'ignore' });
+            pulseProcess.unref();
+            console.log('[Host] Desktop Perimeter Overlay ENABLED');
+        }
+    } else {
+        if (pulseProcess) {
+            pulseProcess.kill();
+            pulseProcess = null;
+        }
+        if (process.platform === 'win32') {
+            require('child_process').exec('taskkill /f /im electron.exe', () => {});
+        }
+        console.log('[Host] Desktop Perimeter Overlay DISABLED');
+    }
+    res.json({ success: true });
+});
+
 app.get('/api/status', (req, res) => {
     res.json({ isEngineOn, isAutoRenew });
 });
