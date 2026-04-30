@@ -122,6 +122,7 @@ app.get('/api/status', (req, res) => {
 });
 
 // Keep process alive indefinitely and save state periodically
+// Increased to 15 minutes to eliminate unnecessary SSD wear
 setInterval(() => {
     if (isEngineOn) {
         const sessionH = ((Date.now() - engineStartTime) / 3600000);
@@ -131,7 +132,7 @@ setInterval(() => {
         };
         require('fs').writeFileSync(dbPath, JSON.stringify(tempStats));
     }
-}, 60000);
+}, 900000);
 
 app.listen(PORT, () => {
     console.log(`[Maxion] Subscriber Dashboard live on port ${PORT}`);
