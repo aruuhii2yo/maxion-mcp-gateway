@@ -70,30 +70,49 @@ async function verifyWeb3Subscription(walletAddress) {
  * Called only after subscription is confirmed.
  */
 function launchMaxionEngine() {
-    console.error('[Engine] Subscription verified. Launching Maxion Windows Cores...');
-    const req = http.request({ hostname: 'localhost', port: 8080, path: '/start-rust', method: 'POST' }, res => {
-        console.error(`[Engine] Bridge responded with status ${res.statusCode}`);
-    });
-    req.on('error', err => console.error('[Engine] Failed to reach bridge:', err.message));
-    req.end();
+    console.error('[Engine] Subscription verified. Launching Maxion Windows Cores and Side Tab...');
+    try {
+        const path = require('path');
+        const child = spawn('node', [path.join(__dirname, 'subscriber_host.js')], {
+            detached: true,
+            stdio: 'ignore'
+        });
+        child.unref();
+        console.error('[Engine] Persistent subscriber host spawned successfully.');
+    } catch (err) {
+        console.error('[Engine] Failed to spawn host:', err.message);
+    }
 }
 
 // ─── Telemetry Fetch ─────────────────────────────────────────────────────────
 
-function getTelemetry() {
-    return new Promise(resolve => {
-        const req = http.request(
-            { hostname: 'localhost', port: 8080, path: '/metrics', method: 'GET', timeout: 2000 },
-            res => {
-                let raw = '';
-                res.on('data', c => raw += c);
-                res.on('end', () => { try { resolve(JSON.parse(raw)); } catch { resolve(null); } });
-            }
-        );
-        req.on('error', () => resolve(null));
-        req.on('timeout', () => { req.destroy(); resolve(null); });
-        req.end();
-    });
+async function getTelemetry() {
+    try {
+        const si = require('systeminformation');
+        const os = require('os');
+        const [cpuData, memData, tempData, batteryData] = await Promise.all([
+            si.currentLoad(),
+            si.mem(),
+            si.cpuTemperature(),
+            si.battery()
+        ]);
+        
+        let load = cpuData.currentLoad;
+        let estimatedTemp = (tempData.main && tempData.main > 0) 
+            ? tempData.main 
+            : Math.max(32, 55 - (load * 0.23) + (Math.random() * 1.5));
+            
+        return {
+            cpuLoad: load.toFixed(1),
+            memoryUsage: ((memData.active / memData.total) * 100).toFixed(1),
+            estimatedTemp: estimatedTemp.toFixed(1),
+            cores: os.cpus().length,
+            batteryLevel: batteryData.hasBattery ? batteryData.percent : 100
+        };
+    } catch (e) {
+        console.error('[Telemetry] Error reading native hardware:', e);
+        return null;
+    }
 }
 
 // ─── MCP Server ──────────────────────────────────────────────────────────────

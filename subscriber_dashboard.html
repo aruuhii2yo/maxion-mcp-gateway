@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Maxion Core - Subscriber Tab</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;900&display=swap');
+    body {
+        margin: 0; padding: 20px; background: #060608; color: #d0d8e8;
+        font-family: 'Outfit', sans-serif;
+        display: flex; flex-direction: column; align-items: center;
+    }
+    .container {
+        width: 100%; max-width: 400px;
+        background: rgba(12, 14, 18, 0.8);
+        border: 1px solid rgba(0, 242, 255, 0.2);
+        border-radius: 12px; padding: 20px;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.05);
+    }
+    .header { text-align: center; margin-bottom: 20px; }
+    .glow-text { color: #00f2ff; font-weight: 900; text-shadow: 0 0 10px rgba(0, 242, 255, 0.5); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .card { background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+    .val { font-size: 1.5rem; font-weight: bold; color: #fff; margin-top: 5px; font-family: 'JetBrains Mono'; }
+    .btn { 
+        width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 6px;
+        font-weight: 900; cursor: pointer; transition: 0.2s; font-family: 'JetBrains Mono';
+    }
+    .btn-refresh { background: rgba(0, 242, 255, 0.1); color: #00f2ff; border: 1px solid #00f2ff; }
+    .btn-refresh:hover { background: rgba(0, 242, 255, 0.2); }
+    .btn-toggle { background: #00f2ff; color: #000; }
+    .btn-toggle.off { background: #ff007a; color: #fff; }
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 class="glow-text">🌱 MAXION CORE</h2>
+            <p style="font-size:0.8rem; color:#888;">Ecological Optimization Active</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div style="font-size:0.7rem; color:#888;">CPU LOAD</div>
+                <div class="val" id="cpu">--%</div>
+            </div>
+            <div class="card">
+                <div style="font-size:0.7rem; color:#888;">MEMORY</div>
+                <div class="val" id="mem">--%</div>
+            </div>
+        </div>
+
+        <button class="btn btn-refresh" onclick="fetchTelemetry()">REFRESH TELEMETRY</button>
+        <button class="btn btn-toggle" id="toggleBtn" onclick="toggleEngine()">DISABLE OPTIMIZATION</button>
+        <p style="font-size: 0.7rem; color: #556; text-align: center; margin-top: 15px;">Maxion is securely running in the background to prevent hibernation and optimize tasks.</p>
+    </div>
+
+    <script>
+        let isEngineOn = true;
+
+        async function fetchTelemetry() {
+            try {
+                const res = await fetch('/api/telemetry');
+                const data = await res.json();
+                document.getElementById('cpu').innerText = data.cpuLoad + '%';
+                document.getElementById('mem').innerText = data.memoryUsage + '%';
+            } catch(e) {
+                document.getElementById('cpu').innerText = 'ERR';
+                document.getElementById('mem').innerText = 'ERR';
+            }
+        }
+
+        async function toggleEngine() {
+            const btn = document.getElementById('toggleBtn');
+            isEngineOn = !isEngineOn;
+            
+            if(isEngineOn) {
+                btn.className = 'btn btn-toggle';
+                btn.innerText = 'DISABLE OPTIMIZATION';
+                await fetch('/api/toggle?state=on', {method: 'POST'});
+            } else {
+                btn.className = 'btn btn-toggle off';
+                btn.innerText = 'ENABLE OPTIMIZATION';
+                await fetch('/api/toggle?state=off', {method: 'POST'});
+            }
+        }
+
+        // Initial fetch
+        fetchTelemetry();
+    </script>
+</body>
+</html>
