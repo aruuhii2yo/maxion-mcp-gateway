@@ -230,7 +230,7 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
             <button class="btn btn-refresh" id="refreshBtn" onclick="fetchTelemetry()">REFRESH</button>
-            <button class="btn btn-refresh" id="stressBtn" style="border-color: #39ff14; color: #39ff14;" onclick="triggerStressTest()">10s STRESS</button>
+            <button class="btn btn-refresh" id="stressBtn" style="border-color: #39ff14; color: #39ff14;" onclick="triggerStressTest()">30s STRESS</button>
             <button class="btn btn-refresh" id="visualsBtn" style="border-color: #555; color: #888;" onclick="toggleVisuals()">NO PULSE</button>
         </div>
         <button class="btn btn-toggle" id="toggleBtn" onclick="toggleEngine()">DISABLE OPTIMIZATION</button>
@@ -274,9 +274,9 @@
             
             setTimeout(() => {
                 btn.disabled = false;
-                btn.innerText = '10s STRESS';
+                btn.innerText = '30s STRESS';
                 btn.classList.remove('btn-flashing-green');
-            }, 10000);
+            }, 30000);
         }
 
         function renewSubscription() {
@@ -374,8 +374,22 @@
             }
         }
 
-        // Initial fetch
-        fetchTelemetry();
+        window.onload = () => {
+            fetchStatus();
+            fetchTelemetry();
+            setInterval(fetchTelemetry, 3000);
+
+            // Show welcome toast for 5 seconds on boot
+            setTimeout(() => {
+                const toast = document.getElementById('toast');
+                if (toast) {
+                    toast.style.opacity = '1';
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                    }, 5000);
+                }
+            }, 800);
+        };
     </script>
 </body>
 </html>

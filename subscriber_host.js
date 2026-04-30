@@ -34,11 +34,11 @@ let isStressTesting = false;
 app.post('/api/stress_test', (req, res) => {
     if (!isStressTesting) {
         isStressTesting = true;
-        console.log('[Host] Mini Stress Test Initiated (10 seconds)...');
+        console.log('[Host] Mini Stress Test Initiated (30 seconds)...');
         setTimeout(() => {
             isStressTesting = false;
             console.log('[Host] Mini Stress Test Concluded.');
-        }, 10000);
+        }, 30000);
     }
     res.json({ success: true });
 });
