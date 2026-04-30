@@ -112,6 +112,16 @@
     .btn-refresh:hover { background: rgba(0, 242, 255, 0.15); box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); transform: translateY(-2px); }
     .btn-refresh:disabled { opacity: 0.5; pointer-events: none; }
     
+    @keyframes flashGreen {
+        0% { background: rgba(57, 255, 20, 0.1); box-shadow: 0 0 10px rgba(57, 255, 20, 0.4); border-color: rgba(57, 255, 20, 0.6); color: #39ff14; }
+        50% { background: rgba(57, 255, 20, 0.4); box-shadow: 0 0 30px rgba(57, 255, 20, 0.9); border-color: #39ff14; color: #fff; }
+        100% { background: rgba(57, 255, 20, 0.1); box-shadow: 0 0 10px rgba(57, 255, 20, 0.4); border-color: rgba(57, 255, 20, 0.6); color: #39ff14; }
+    }
+    .btn-flashing-green {
+        animation: flashGreen 0.6s infinite !important;
+        opacity: 1 !important;
+    }
+
     .btn-toggle { background: linear-gradient(90deg, #00f2ff, #0088ff); color: #000; box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); border: none; }
     .btn-toggle:hover { box-shadow: 0 0 30px rgba(0, 242, 255, 0.6); transform: scale(1.02); }
     .btn-toggle.off { background: linear-gradient(90deg, #ff007a, #ff4000); color: #fff; box-shadow: 0 0 20px rgba(255, 0, 122, 0.4); }
@@ -185,9 +195,10 @@
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="btn btn-refresh" id="refreshBtn" onclick="fetchTelemetry()">REFRESH TELEMETRY</button>
-            <button class="btn btn-refresh" id="visualsBtn" style="border-color: #555; color: #888;" onclick="toggleVisuals()">DISABLE PULSE</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+            <button class="btn btn-refresh" id="refreshBtn" onclick="fetchTelemetry()">REFRESH</button>
+            <button class="btn btn-refresh" id="stressBtn" style="border-color: #39ff14; color: #39ff14;" onclick="triggerStressTest()">10s STRESS</button>
+            <button class="btn btn-refresh" id="visualsBtn" style="border-color: #555; color: #888;" onclick="toggleVisuals()">NO PULSE</button>
         </div>
         <button class="btn btn-toggle" id="toggleBtn" onclick="toggleEngine()">DISABLE OPTIMIZATION</button>
         
@@ -209,13 +220,30 @@
             visualsOn = !visualsOn;
             const btn = document.getElementById('visualsBtn');
             if (visualsOn) {
-                btn.innerText = 'DISABLE PULSE';
+                btn.innerText = 'NO PULSE';
                 btn.style.borderColor = '#555'; btn.style.color = '#888';
             } else {
-                btn.innerText = 'ENABLE PULSE';
+                btn.innerText = 'PULSING';
                 btn.style.borderColor = '#00f2ff'; btn.style.color = '#00f2ff';
             }
             await fetch(`/api/perimeter?state=${visualsOn ? 'on' : 'off'}`, { method: 'POST' });
+        }
+
+        async function triggerStressTest() {
+            const btn = document.getElementById('stressBtn');
+            if (btn.disabled) return;
+            
+            btn.disabled = true;
+            btn.innerText = 'TESTING...';
+            btn.classList.add('btn-flashing-green');
+            
+            await fetch('/api/stress_test', { method: 'POST' });
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerText = '10s STRESS';
+                btn.classList.remove('btn-flashing-green');
+            }, 10000);
         }
 
         function renewSubscription() {

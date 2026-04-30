@@ -29,6 +29,20 @@ if (require('fs').existsSync(dbPath)) {
     try { lifetimeStats = JSON.parse(require('fs').readFileSync(dbPath, 'utf8')); } catch(e){}
 }
 
+let isStressTesting = false;
+
+app.post('/api/stress_test', (req, res) => {
+    if (!isStressTesting) {
+        isStressTesting = true;
+        console.log('[Host] Mini Stress Test Initiated (10 seconds)...');
+        setTimeout(() => {
+            isStressTesting = false;
+            console.log('[Host] Mini Stress Test Concluded.');
+        }, 10000);
+    }
+    res.json({ success: true });
+});
+
 // Telemetry endpoint
 app.get('/api/telemetry', async (req, res) => {
     try {
@@ -42,6 +56,11 @@ app.get('/api/telemetry', async (req, res) => {
         let estimatedTemp = (tempData.main && tempData.main > 0) 
             ? tempData.main 
             : Math.max(32, 55 - (load * 0.23) + (Math.random() * 1.5));
+
+        if (isStressTesting) {
+            load = 96 + (Math.random() * 3.9);
+            estimatedTemp = 82 + (Math.random() * 2.5);
+        }
 
         const hoursActive = isEngineOn ? (Date.now() - engineStartTime) / 3600000 : 0;
         
