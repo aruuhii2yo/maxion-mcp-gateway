@@ -10,7 +10,13 @@ app.use(express.json());
 
 // Serve the dashboard
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'subscriber_dashboard.html'));
+    try {
+        const fs = require('fs');
+        const html = fs.readFileSync(path.join(__dirname, 'subscriber_dashboard.html'), 'utf8');
+        res.send(html);
+    } catch (err) {
+        res.status(500).send('Error loading dashboard: ' + err.message);
+    }
 });
 
 // Telemetry endpoint

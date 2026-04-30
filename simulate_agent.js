@@ -13,8 +13,7 @@ mcp.stdout.on('data', (data) => {
             console.log(`\n[Agent Received]:\n`, JSON.stringify(parsed, null, 2));
 
             if (messageCount === 0) {
-                // Sent list tools
-                console.log("\n[Agent Strategy]: Requesting maxion_execute without valid subscription...");
+                console.log("\n[Agent Strategy]: Requesting maxion_execute with Developer Bypass to spawn the dashboard...");
                 const req = {
                     jsonrpc: "2.0",
                     id: 2,
@@ -22,16 +21,15 @@ mcp.stdout.on('data', (data) => {
                     params: {
                         name: "maxion_execute",
                         arguments: {
-                            identifier: "unauthorized_agent@example.com",
+                            identifier: "admin@maxion",
                             payment_type: "fiat"
                         }
                     }
                 };
                 mcp.stdin.write(JSON.stringify(req) + '\n');
             } else if (messageCount === 1) {
-                // Done
-                console.log("\n[Agent Conclusion]: Successfully received the Stripe link. Simulation Complete.");
-                mcp.kill();
+                console.log("\n[Agent Conclusion]: Subscription verified. The Maxion UI should now open in your browser!");
+                setTimeout(() => mcp.kill(), 2000);
             }
             messageCount++;
         } catch (e) {
