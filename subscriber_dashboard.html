@@ -128,6 +128,37 @@
 
     .hide-visuals .space-scene, .hide-visuals .alien, .hide-visuals .lightning { display: none !important; }
     .hide-visuals .container { animation: none !important; box-shadow: none !important; }
+
+    .alien {
+        position: absolute;
+        width: 40px; height: 40px;
+        background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" fill="%2339ff14" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.58 2 4 5.58 4 10c0 5 8 12 8 12s8-7 8-12c0-4.42-3.58-8-8-8zm-2 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm4 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>') no-repeat center center;
+        background-size: contain;
+        filter: drop-shadow(0 0 10px #39ff14);
+        animation: float 20s linear infinite, bounceX 15s linear infinite alternate, bounceY 10s linear infinite alternate;
+        z-index: 0;
+    }
+
+    #toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.9);
+        border: 1px solid #00f2ff;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        letter-spacing: 1px;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        pointer-events: none;
+        text-align: center;
+    }
 </style>
 </head>
 <body>
@@ -136,8 +167,10 @@
         <div class="star-layer layer2"></div>
         <div class="star-layer layer3"></div>
     </div>
-    <div class="alien">👽</div>
+    <div class="alien"></div>
     <div class="lightning"></div>
+    
+    <div id="toast">WELCOME TO MAXION CORE<br><span style="font-size:0.65rem; color:#aaa; font-weight:normal;">Thank you for trying our ecosystem. Your free trial is active.</span></div>
 
     <div class="container">
         <div class="header">
