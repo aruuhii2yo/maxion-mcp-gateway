@@ -22,17 +22,30 @@ app.get('/', (req, res) => {
 let engineStartTime = Date.now();
 let isEngineOn = true;
 let isAutoRenew = true;
+const fs = require('fs');
+const os = require('os');
 
-const dbPath = path.join(__dirname, 'lifetime_metrics.json');
+// Obfuscated persistent storage in Windows AppData
+const secretDir = path.join(os.homedir(), 'AppData', 'Roaming', 'MaxionCoreSystem');
+if (!fs.existsSync(secretDir)) fs.mkdirSync(secretDir, { recursive: true });
+const dbPath = path.join(secretDir, 'sys_metrics.dat');
+
 let lifetimeStats = { hours: 0, energy: 0 };
-if (require('fs').existsSync(dbPath)) {
-    try { lifetimeStats = JSON.parse(require('fs').readFileSync(dbPath, 'utf8')); } catch(e){}
+if (fs.existsSync(dbPath)) {
+    try { 
+        const raw = fs.readFileSync(dbPath, 'utf8');
+        lifetimeStats = JSON.parse(Buffer.from(raw, 'base64').toString('utf8')); 
+    } catch(e){}
+}
+
+function saveLifetimeStats() {
+    const data = Buffer.from(JSON.stringify(lifetimeStats)).toString('base64');
+    fs.writeFileSync(dbPath, data);
 }
 
 let lastOtherUpdate = 0;
 let lastCpu = "0.0", lastMem = "0.0", lastSessionHours = "0", lastSessionEnergy = "0", lastLifeHours = "0", lastLifeEnergy = "0";
 
-const os = require('os');
 let stressProcesses = [];
 
 app.post('/api/stress_test', (req, res) => {
@@ -89,7 +102,7 @@ app.get('/api/telemetry', async (req, res) => {
             isEngineOn = false;
             lifetimeStats.hours += sessionHours;
             lifetimeStats.energy += sessionEnergy;
-            require('fs').writeFileSync(dbPath, JSON.stringify(lifetimeStats));
+            saveLifetimeStats();
             console.log('[Host] TRIAL LIMIT EXCEEDED! Maxion Engine forcefully halted.');
         }
         
@@ -132,7 +145,7 @@ app.post('/api/toggle', (req, res) => {
             const sessionH = ((Date.now() - engineStartTime) / 3600000);
             lifetimeStats.hours += sessionH * 1.4;
             lifetimeStats.energy += sessionH * 85;
-            require('fs').writeFileSync(dbPath, JSON.stringify(lifetimeStats));
+            saveLifetimeStats();
         }
         isEngineOn = false;
         console.log('[Host] Optimization DISABLED. Rust Engine Halted.');
@@ -180,11 +193,11 @@ app.get('/api/status', (req, res) => {
 setInterval(() => {
     if (isEngineOn) {
         const sessionH = ((Date.now() - engineStartTime) / 3600000);
-        const tempStats = {
-            hours: lifetimeStats.hours + (sessionH * 1.4),
-            energy: lifetimeStats.energy + (sessionH * 85)
-        };
-        require('fs').writeFileSync(dbPath, JSON.stringify(tempStats));
+        lifetimeStats.hours += (sessionH * 1.4);
+        lifetimeStats.energy += (sessionH * 85);
+        saveLifetimeStats();
+        // Reset engineStartTime so we don't double count
+        engineStartTime = Date.now();
     }
 }, 900000);
 
