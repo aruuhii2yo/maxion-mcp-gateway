@@ -100,7 +100,7 @@ app.post('/api/perimeter', (req, res) => {
     if (state === 'on') {
         if (!pulseProcess) {
             const overlayPath = path.join(__dirname, '..', 'pulse_overlay.js');
-            pulseProcess = require('child_process').spawn('npx', ['electron', overlayPath], { detached: true, stdio: 'ignore' });
+            pulseProcess = require('child_process').spawn('npx', ['electron', overlayPath], { detached: true, stdio: 'ignore', shell: true });
             pulseProcess.unref();
             console.log('[Host] Desktop Perimeter Overlay ENABLED');
         }
@@ -140,7 +140,7 @@ app.listen(PORT, () => {
     // Auto-launch the global monitor pulse overlay
     if (!pulseProcess) {
         const overlayPath = path.join(__dirname, '..', 'pulse_overlay.js');
-        pulseProcess = require('child_process').spawn('npx', ['electron', overlayPath], { detached: true, stdio: 'ignore' });
+        pulseProcess = require('child_process').spawn('npx', ['electron', overlayPath], { detached: true, stdio: 'ignore', shell: true });
         pulseProcess.unref();
         console.log('[Host] Global Monitor Pulse Auto-Launched');
     }
