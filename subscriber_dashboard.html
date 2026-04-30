@@ -197,10 +197,8 @@
                 <button class="btn btn-refresh" id="autoRenewBtn" style="margin: 0; font-size: 0.7rem;" onclick="toggleAutoRenew()">AUTO-RENEW: ON</button>
                 <button class="btn btn-refresh" style="margin: 0; font-size: 0.7rem; border-color: #ff007a; color: #ff007a; background: rgba(255, 0, 122, 0.1);" onclick="renewSubscription()">RENEW LICENSE</button>
             </div>
-            <button class="btn btn-refresh" id="visualsBtn" style="margin: 10px 0 0 0; font-size: 0.7rem; border-color: #555; color: #888;" onclick="toggleVisuals()">DISABLE SCREEN PERIMETER EFFECT</button>
+            <button class="btn btn-refresh" id="visualsBtn" style="margin: 10px 0 0 0; font-size: 0.7rem; border-color: #555; color: #888;" onclick="toggleVisuals()">DISABLE MONITOR PULSE</button>
         </div>
-
-        <p style="font-size: 0.7rem; color: #556; text-align: center; margin-top: 15px;">Maxion is securely running in the background to prevent hibernation and optimize tasks. Both you and your AI Agent have full clearance to control this dashboard.</p>
     </div>
 
     <script>
@@ -212,10 +210,10 @@
             visualsOn = !visualsOn;
             const btn = document.getElementById('visualsBtn');
             if (visualsOn) {
-                btn.innerText = 'DISABLE SCREEN PERIMETER EFFECT';
+                btn.innerText = 'DISABLE MONITOR PULSE';
                 btn.style.borderColor = '#555'; btn.style.color = '#888';
             } else {
-                btn.innerText = 'ENABLE SCREEN PERIMETER EFFECT';
+                btn.innerText = 'ENABLE MONITOR PULSE';
                 btn.style.borderColor = '#00f2ff'; btn.style.color = '#00f2ff';
             }
             await fetch(`/api/perimeter?state=${visualsOn ? 'on' : 'off'}`, { method: 'POST' });

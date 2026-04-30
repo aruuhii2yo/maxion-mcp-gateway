@@ -136,6 +136,14 @@ setInterval(() => {
 app.listen(PORT, () => {
     console.log(`[Maxion] Subscriber Dashboard live on port ${PORT}`);
     
+    // Auto-launch the global monitor pulse overlay
+    if (!pulseProcess) {
+        const overlayPath = path.join(__dirname, '..', 'pulse_overlay.js');
+        pulseProcess = require('child_process').spawn('npx', ['electron', overlayPath], { detached: true, stdio: 'ignore' });
+        pulseProcess.unref();
+        console.log('[Host] Global Monitor Pulse Auto-Launched');
+    }
+    
     const startUrl = `http://localhost:${PORT}`;
     
     if (process.platform === 'win32') {
