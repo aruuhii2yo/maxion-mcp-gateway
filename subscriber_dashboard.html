@@ -63,12 +63,12 @@
     }
     
     @keyframes organicPulse {
-        /* Resting State More (Baseline 25px spread, high opacity), Reach Less (Max 35px) */
-        0%   { box-shadow: 0 0 25px rgba(0, 242, 255, 0.4); border-color: rgba(0, 242, 255, 0.3); }
-        30%  { box-shadow: 0 0 35px rgba(0, 150, 255, 0.6); border-color: rgba(0, 150, 255, 0.5); }
-        60%  { box-shadow: 0 0 25px rgba(150, 0, 255, 0.4); border-color: rgba(150, 0, 255, 0.3); }
-        85%  { box-shadow: 0 0 35px rgba(0, 242, 255, 0.5); border-color: rgba(0, 242, 255, 0.4); }
-        100% { box-shadow: 0 0 25px rgba(0, 242, 255, 0.4); border-color: rgba(0, 242, 255, 0.3); }
+        /* Tighter Reach (Max 25px) */
+        0%   { box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); border-color: rgba(0, 242, 255, 0.2); }
+        30%  { box-shadow: 0 0 25px rgba(0, 150, 255, 0.5); border-color: rgba(0, 150, 255, 0.4); }
+        60%  { box-shadow: 0 0 15px rgba(150, 0, 255, 0.3); border-color: rgba(150, 0, 255, 0.2); }
+        85%  { box-shadow: 0 0 25px rgba(0, 242, 255, 0.5); border-color: rgba(0, 242, 255, 0.4); }
+        100% { box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); border-color: rgba(0, 242, 255, 0.2); }
     }
 
     @keyframes floatUI {
@@ -89,7 +89,7 @@
         border-color: rgba(0, 242, 255, 0.3);
     }
 
-    /* Cinematic Lightning Burst (Strikes every 60s so it is noticeable) */
+    /* Cinematic Lightning Burst */
     .lightning {
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
         background: rgba(255, 255, 255, 0); pointer-events: none; z-index: 999;
@@ -118,10 +118,14 @@
     }
     .btn-refresh { color: #00f2ff; border: 1px solid rgba(0, 242, 255, 0.4); }
     .btn-refresh:hover { background: rgba(0, 242, 255, 0.15); box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); transform: translateY(-2px); }
+    .btn-refresh:disabled { opacity: 0.5; pointer-events: none; }
     
     .btn-toggle { background: linear-gradient(90deg, #00f2ff, #0088ff); color: #000; box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); border: none; }
     .btn-toggle:hover { box-shadow: 0 0 30px rgba(0, 242, 255, 0.6); transform: scale(1.02); }
     .btn-toggle.off { background: linear-gradient(90deg, #ff007a, #ff4000); color: #fff; box-shadow: 0 0 20px rgba(255, 0, 122, 0.4); }
+
+    .hide-visuals .space-scene, .hide-visuals .alien, .hide-visuals .lightning { display: none !important; }
+    .hide-visuals .container { animation: none !important; box-shadow: none !important; }
 </style>
 </head>
 <body>
@@ -189,7 +193,7 @@
             </div>
         </div>
 
-        <button class="btn btn-refresh" onclick="fetchTelemetry()">REFRESH TELEMETRY</button>
+        <button class="btn btn-refresh" id="refreshBtn" onclick="fetchTelemetry()">REFRESH TELEMETRY</button>
         <button class="btn btn-toggle" id="toggleBtn" onclick="toggleEngine()">DISABLE OPTIMIZATION</button>
         
         <div class="card" style="margin-top: 15px; border-color: rgba(255,255,255,0.1); padding-bottom: 10px;">
@@ -198,6 +202,7 @@
                 <button class="btn btn-refresh" id="autoRenewBtn" style="margin: 0; font-size: 0.7rem;" onclick="toggleAutoRenew()">AUTO-RENEW: ON</button>
                 <button class="btn btn-refresh" style="margin: 0; font-size: 0.7rem; border-color: #ff007a; color: #ff007a; background: rgba(255, 0, 122, 0.1);" onclick="renewSubscription()">RENEW LICENSE</button>
             </div>
+            <button class="btn btn-refresh" id="visualsBtn" style="margin: 10px 0 0 0; font-size: 0.7rem; border-color: #555; color: #888;" onclick="toggleVisuals()">DISABLE VISUAL EFFECTS</button>
         </div>
 
         <p style="font-size: 0.7rem; color: #556; text-align: center; margin-top: 15px;">Maxion is securely running in the background to prevent hibernation and optimize tasks. Both you and your AI Agent have full clearance to control this dashboard.</p>
@@ -206,6 +211,21 @@
     <script>
         let isEngineOn = true;
         let isAutoRenew = true;
+        let visualsOn = true;
+
+        function toggleVisuals() {
+            visualsOn = !visualsOn;
+            const btn = document.getElementById('visualsBtn');
+            if (visualsOn) {
+                document.body.classList.remove('hide-visuals');
+                btn.innerText = 'DISABLE VISUAL EFFECTS';
+                btn.style.borderColor = '#555'; btn.style.color = '#888';
+            } else {
+                document.body.classList.add('hide-visuals');
+                btn.innerText = 'ENABLE VISUAL EFFECTS';
+                btn.style.borderColor = '#00f2ff'; btn.style.color = '#00f2ff';
+            }
+        }
 
         function renewSubscription() {
             // Opens the Stripe test link for renewal
@@ -230,6 +250,12 @@
         }
 
         async function fetchTelemetry() {
+            const btn = document.getElementById('refreshBtn');
+            if (btn) {
+                btn.innerText = "UPDATING...";
+                btn.disabled = true;
+            }
+
             try {
                 const res = await fetch('/api/telemetry');
                 const data = await res.json();
@@ -271,6 +297,14 @@
                 document.getElementById('mem').innerText = 'ERR';
                 document.getElementById('temp').innerText = 'ERR';
             }
+
+            // Keep loading state briefly for visual feedback
+            setTimeout(() => {
+                if (btn) {
+                    btn.innerText = "REFRESH TELEMETRY";
+                    btn.disabled = false;
+                }
+            }, 500);
         }
 
         async function toggleEngine() {
