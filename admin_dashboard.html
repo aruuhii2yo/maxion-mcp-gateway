@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Maxion Admin Command Center</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;900&display=swap');
+    
+    :root {
+        --bg: #030508;
+        --card: rgba(10, 15, 25, 0.7);
+        --border: rgba(0, 242, 255, 0.15);
+        --teal: #00f2ff;
+        --green: #39ff14;
+        --red: #ff4466;
+        --text: #d0d8e8;
+        --muted: #667899;
+    }
+    
+    body {
+        margin: 0; padding: 20px; background: var(--bg); color: var(--text);
+        font-family: 'Outfit', sans-serif;
+        display: flex; flex-direction: column; min-height: 100vh;
+        overflow-x: hidden;
+    }
+    
+    .header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding-bottom: 15px; border-bottom: 1px solid var(--border);
+        margin-bottom: 25px;
+    }
+    
+    .glow-title {
+        font-size: 1.5rem; font-weight: 900; color: var(--teal);
+        text-shadow: 0 0 15px rgba(0,242,255,0.4); margin: 0; letter-spacing: 1px;
+    }
+    
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    
+    .card {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 12px; padding: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    
+    .card-title {
+        font-size: 0.75rem; color: var(--muted); font-weight: 600;
+        letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px;
+    }
+    
+    .stat-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .stat-row:last-child { border-bottom: none; }
+    
+    .stat-label { font-size: 0.9rem; color: #a0aabf; }
+    .stat-value { font-family: 'JetBrains Mono'; font-size: 1.2rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+    
+    .live-dot {
+        display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+        background: var(--red); box-shadow: 0 0 10px var(--red);
+        margin-right: 8px; transition: 0.3s;
+    }
+    .live-dot.active { background: var(--green); box-shadow: 0 0 10px var(--green); }
+    
+    .url-box {
+        background: rgba(0,0,0,0.5); border: 1px dashed var(--teal);
+        padding: 10px; border-radius: 6px; font-family: 'JetBrains Mono';
+        color: var(--teal); font-size: 0.85rem; text-align: center;
+        margin-top: 15px; word-break: break-all;
+    }
+    
+    .btn-shutdown {
+        background: rgba(255, 68, 102, 0.1); color: var(--red);
+        border: 1px solid var(--red); padding: 10px 20px;
+        border-radius: 8px; font-weight: 900; cursor: pointer;
+        transition: 0.3s; font-family: 'JetBrains Mono'; font-size: 0.8rem;
+    }
+    .btn-shutdown:hover {
+        background: rgba(255, 68, 102, 0.3); box-shadow: 0 0 15px rgba(255, 68, 102, 0.5);
+    }
+</style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1 class="glow-title">ADMIN COMMAND CENTER</h1>
+            <div style="font-size:0.65rem; color:var(--muted); font-family:'JetBrains Mono'; margin-top:4px;">Unified Business & Traffic Intelligence</div>
+        </div>
+        <button class="btn-shutdown" onclick="shutdown()">SHUT DOWN DASH & NGROK</button>
+    </div>
+
+    <div class="grid">
+        <!-- Traffic & Network -->
+        <div class="card">
+            <div class="card-title">NETWORK & TRAFFIC</div>
+            
+            <div class="stat-row">
+                <span class="stat-label">MCP Gateway Status</span>
+                <span class="stat-value" id="ngrok-status" style="font-size:1rem; color:var(--red);">OFFLINE</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Total Requests Handled</span>
+                <span class="stat-value" id="ngrok-reqs">0</span>
+            </div>
+            
+            <div class="url-box" id="ngrok-url">Waiting for tunnel...</div>
+        </div>
+
+        <!-- Agent Intelligence -->
+        <div class="card">
+            <div class="card-title">AGENT INTELLIGENCE</div>
+            
+            <div class="stat-row">
+                <span class="stat-label">Global Live Discovery</span>
+                <span class="stat-value" style="font-size:1rem; display:flex; align-items:center;">
+                    <span class="live-dot" id="dot-discovery"></span><span id="discovery-text">AWAITING AGENTS</span>
+                </span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Agents Encountered</span>
+                <span class="stat-value" id="agent-count">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Agent Ping Stream</span>
+                <span class="stat-value" style="font-size:1rem; display:flex; align-items:center;">
+                    <span class="live-dot" id="dot-ping"></span><span id="ping-text">IDLE</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Business & Revenue -->
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-title">SUBSCRIPTIONS & REVENUE</div>
+            
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+                <div style="text-align:center; padding:15px; background:rgba(0,0,0,0.3); border-radius:8px;">
+                    <div style="font-size:0.7rem; color:var(--muted); margin-bottom:5px;">ACTIVE SUBSCRIBERS</div>
+                    <div class="stat-value" id="bus-subs" style="color:var(--teal); font-size:1.8rem;">0</div>
+                </div>
+                <div style="text-align:center; padding:15px; background:rgba(0,0,0,0.3); border-radius:8px;">
+                    <div style="font-size:0.7rem; color:var(--muted); margin-bottom:5px;">MONTHLY REVENUE</div>
+                    <div class="stat-value" id="bus-mrr" style="color:var(--green); font-size:1.8rem;">$0</div>
+                </div>
+                <div style="text-align:center; padding:15px; background:rgba(0,0,0,0.3); border-radius:8px;">
+                    <div style="font-size:0.7rem; color:var(--muted); margin-bottom:5px;">MIGRATED WORKLOADS</div>
+                    <div class="stat-value" id="bus-mig" style="color:#fff; font-size:1.8rem;">0</div>
+                </div>
+            </div>
+            
+            <div class="stat-row">
+                <span class="stat-label">Treasury Vault Address</span>
+                <span class="stat-value" id="bus-treasury" style="font-size:0.85rem; color:var(--teal);">0x...</span>
+            </div>
+        </div>
+    </div>
+
+<script>
+async function poll() {
+    try {
+        const res = await fetch('/api/stats');
+        const d = await res.json();
+
+        // Network
+        const ngStatus = document.getElementById('ngrok-status');
+        if (d.ngrok.running && d.ngrok.url) {
+            ngStatus.innerText = 'ONLINE';
+            ngStatus.style.color = 'var(--green)';
+            document.getElementById('ngrok-url').innerText = d.ngrok.url;
+        } else {
+            ngStatus.innerText = 'BOOTING...';
+            ngStatus.style.color = 'var(--red)';
+            document.getElementById('ngrok-url').innerText = 'Establishing secure connection...';
+        }
+        document.getElementById('ngrok-reqs').innerText = d.ngrok.requests;
+
+        // Agents
+        document.getElementById('agent-count').innerText = d.agents.count;
+        
+        const dotDisc = document.getElementById('dot-discovery');
+        const txtDisc = document.getElementById('discovery-text');
+        if (d.agents.count > 0) {
+            dotDisc.classList.add('active');
+            txtDisc.innerText = 'ACTIVE IN ECOSYSTEM';
+        }
+
+        const dotPing = document.getElementById('dot-ping');
+        const txtPing = document.getElementById('ping-text');
+        if (d.agents.pingActive) {
+            dotPing.classList.add('active');
+            txtPing.innerText = 'RECEIVING TRAFFIC';
+        } else {
+            dotPing.classList.remove('active');
+            txtPing.innerText = 'IDLE';
+        }
+
+        // Business
+        document.getElementById('bus-subs').innerText = d.business.subscribers;
+        document.getElementById('bus-mrr').innerText = '$' + d.business.mrr.toLocaleString();
+        document.getElementById('bus-mig').innerText = d.business.migrated;
+        document.getElementById('bus-treasury').innerText = d.business.treasury;
+
+    } catch (e) {}
+}
+
+async function shutdown() {
+    if (confirm("Are you sure you want to shut down the Admin Dash and kill the Ngrok public tunnel?")) {
+        document.body.innerHTML = '<div style="display:flex; height:100vh; justify-content:center; align-items:center;"><h1 class="glow-title" style="color:#ff4466;">SHUTTING DOWN...</h1></div>';
+        await fetch('/api/shutdown', { method: 'POST' });
+        setTimeout(() => window.close(), 1000);
+    }
+}
+
+setInterval(poll, 1000);
+poll();
+</script>
+</body>
+</html>

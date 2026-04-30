@@ -75,11 +75,9 @@ app.post('/api/stress_test', (req, res) => {
 // Telemetry endpoint
 app.get('/api/telemetry', async (req, res) => {
     try {
-        const [cpuData, memData, tempData] = await Promise.all([
-            si.currentLoad(),
-            si.mem(),
-            si.cpuTemperature()
-        ]);
+        const cpuData = await si.currentLoad().catch(() => ({ currentLoad: 0 }));
+        const memData = await si.mem().catch(() => ({ active: 0, total: 1 }));
+        const tempData = await si.cpuTemperature().catch(() => ({ main: 0 }));
         
         let load = cpuData.currentLoad;
         // If systeminformation cannot read hardware temp without Admin, fallback to an organic calculation based on real load.
@@ -139,6 +137,13 @@ app.post('/api/toggle', (req, res) => {
         isEngineOn = true;
         engineStartTime = Date.now();
         console.log('[Host] Optimization ENABLED. Rust Engine Active.');
+        
+        const path = require('path');
+        const rustExe = path.join(__dirname, '..', 'maxion_windows_cores.exe');
+        exec('taskkill /F /IM maxion_windows_cores.exe /T', () => {
+            const proc = require('child_process').spawn(rustExe, [], { detached: true, stdio: 'ignore', shell: true });
+            proc.unref();
+        });
     } else {
         if (isEngineOn) {
             // Save current session to lifetime before turning off
@@ -149,6 +154,7 @@ app.post('/api/toggle', (req, res) => {
         }
         isEngineOn = false;
         console.log('[Host] Optimization DISABLED. Rust Engine Halted.');
+        require('child_process').exec('taskkill /F /IM maxion_windows_cores.exe /T', () => {});
     }
     res.json({ success: true, state });
 });
@@ -159,6 +165,16 @@ app.post('/api/settings', (req, res) => {
         console.log(`[Host] Auto-Renew set to ${isAutoRenew ? 'ON' : 'OFF'}`);
     }
     res.json({ success: true, isAutoRenew });
+});
+
+app.post('/api/verify_payment', (req, res) => {
+    lifetimeStats.hours = 0;
+    lifetimeStats.energy = 0;
+    saveLifetimeStats();
+    isEngineOn = true;
+    engineStartTime = Date.now();
+    console.log('[Host] Payment verified. Trial/Subscription reset!');
+    res.json({ success: true });
 });
 
 let pulseProcess = null;

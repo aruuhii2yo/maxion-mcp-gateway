@@ -1,27 +1,25 @@
 const express = require('express');
 const os = require('os');
 const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-let lastAgentPing = 0;
+// Serve the standalone telemetry dashboard
+app.get('/', (req, res) => {
+    try {
+        const fs = require('fs');
+        const html = fs.readFileSync(path.join(__dirname, '..', 'dashboard_telemetry.html'), 'utf8');
+        res.send(html);
+    } catch (err) {
+        res.status(500).send('Error loading telemetry dashboard: ' + err.message);
+    }
+});
 
-let previousCpus = os.cpus();
 let simBattery = 100.0;
-
-// Initialize Supabase for live MRR and traffic data
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
-
-// Fallback variables if Supabase is not yet configured (Starting Baseline)
-let simAgentsEncountered = 0;
-let simActiveSubscribers = 0;
-let simMigratedWorkloads = 0;
 
 // Simulation loop disabled for Production
 /*
@@ -39,43 +37,7 @@ setInterval(() => {
 }, 1000);
 */
 
-app.post('/agent-ping', (req, res) => {
-    lastAgentPing = Date.now();
-    simAgentsEncountered++;
-    res.json({ success: true });
-});
 
-app.post('/start-ngrok', (req, res) => {
-    const { spawn, exec } = require('child_process');
-    const path = require('path');
-    const ngrokExe = path.join(__dirname, '..', 'ngrok.exe');
-    console.log('[Remote] Dashboard trigger: REBOOT TUNNEL');
-    exec('taskkill /F /IM ngrok.exe /T', () => {
-        const proc = spawn(ngrokExe, ['http', '8080'], { detached: true, stdio: 'ignore', shell: true });
-        proc.unref();
-        res.json({ success: true });
-    });
-});
-
-app.post('/start-rust', (req, res) => {
-    const { spawn, exec } = require('child_process');
-    const path = require('path');
-    const rustExe = 'C:\\Users\\aruuh\\.gemini\\antigravity\\scratch\\Maxion_Windows_Core\\maxion_windows_cores.exe';
-    console.log('[Remote] Dashboard trigger: POWER ON RUST ENGINE');
-    exec('taskkill /F /IM maxion_windows_cores.exe /T', () => {
-        const proc = spawn(rustExe, [], { detached: true, stdio: 'ignore', shell: true });
-        proc.unref();
-        res.json({ success: true });
-    });
-});
-
-app.post('/stop-rust', (req, res) => {
-    const { exec } = require('child_process');
-    console.log('[Remote] Powering OFF Rust Engine...');
-    exec('taskkill /F /IM maxion_windows_cores.exe /T', () => {
-        res.json({ success: true });
-    });
-});
 
 app.get('/metrics', async (req, res) => {
     // 1. Highly Accurate Hardware Telemetry via systeminformation
@@ -83,12 +45,10 @@ app.get('/metrics', async (req, res) => {
     let load = 0, memUsage = 0, estimatedTemp = 0, cores = os.cpus().length, batteryLevel = simBattery;
 
     try {
-        const [cpuData, memData, tempData, batteryData] = await Promise.all([
-            si.currentLoad(),
-            si.mem(),
-            si.cpuTemperature(),
-            si.battery()
-        ]);
+        const cpuData = await si.currentLoad().catch(() => ({ currentLoad: 0 }));
+        const memData = await si.mem().catch(() => ({ active: 0, total: 1 }));
+        const tempData = await si.cpuTemperature().catch(() => ({ main: 0 }));
+        const batteryData = await si.battery().catch(() => ({ hasBattery: false }));
         
         load = cpuData.currentLoad.toFixed(1);
         memUsage = ((memData.active / memData.total) * 100).toFixed(1);
@@ -110,46 +70,13 @@ app.get('/metrics', async (req, res) => {
     } catch (e) {
         console.error("Telemetry error", e);
     }
-
-    // 2. Business Intelligence (Supabase Binding)
-    let activeSubscribers = simActiveSubscribers;
-    let migratedWorkloads = simMigratedWorkloads;
-    let agentsEncountered = simAgentsEncountered;
-
-    if (supabase) {
-        try {
-            // Pull real active subscribers
-            const { count: subCount } = await supabase
-                .from('subscriptions')
-                .select('*', { count: 'exact', head: true })
-                .eq('status', 'active');
-            
-            if (subCount !== null) activeSubscribers = subCount;
-
-            // Pull real migrated workloads
-            const { count: workCount } = await supabase
-                .from('migrations_log')
-                .select('*', { count: 'exact', head: true });
-            
-            if (workCount !== null) migratedWorkloads = workCount;
-            
-        } catch (e) {
-            // Fail silently and use simulation metrics
-        }
-    }
     
     res.json({
         cpuLoad: load,
         estimatedTemp: estimatedTemp,
         memoryUsage: memUsage,
         cores: cores,
-        agentsEncountered,
-        activeSubscribers,
-        mrr: activeSubscribers * 20,
-        treasury: "0x6E5b3C4A51D1E0aE2E8c4f923b7a5B229C8B5f6A",
-        agentPingActive: (Date.now() - lastAgentPing) < 3000,
-        batteryLevel: batteryLevel,
-        globalLive: agentsEncountered > 0
+        batteryLevel: batteryLevel
     });
 });
 
@@ -161,4 +88,17 @@ app.listen(8080, () => {
     console.log('=============================================');
     console.log(' MAXION HARDWARE LINK ACTIVE ON PORT 8080');
     console.log('=============================================');
+    
+    // Auto-launch standalone telemetry dashboard
+    const startUrl = `http://localhost:8080`;
+    const { exec } = require('child_process');
+    if (process.platform === 'win32') {
+        exec(`start msedge --app="${startUrl}"`, (err) => {
+            if (err) {
+                exec(`start chrome --app="${startUrl}"`, (err2) => {
+                    if (err2) exec(`start "${startUrl}"`);
+                });
+            }
+        });
+    }
 });
