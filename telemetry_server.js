@@ -48,7 +48,7 @@ app.post('/agent-ping', (req, res) => {
 app.post('/start-ngrok', (req, res) => {
     const { spawn, exec } = require('child_process');
     const path = require('path');
-    const ngrokExe = 'C:\\Users\\aruuh\\.gemini\\antigravity\\scratch\\Maxion_Windows_Core\\ngrok.exe';
+    const ngrokExe = path.join(__dirname, '..', 'ngrok.exe');
     console.log('[Remote] Dashboard trigger: REBOOT TUNNEL');
     exec('taskkill /F /IM ngrok.exe /T', () => {
         const proc = spawn(ngrokExe, ['http', '8080'], { detached: true, stdio: 'ignore', shell: true });
