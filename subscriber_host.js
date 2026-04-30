@@ -29,6 +29,9 @@ if (require('fs').existsSync(dbPath)) {
     try { lifetimeStats = JSON.parse(require('fs').readFileSync(dbPath, 'utf8')); } catch(e){}
 }
 
+let lastOtherUpdate = 0;
+let lastCpu = "0.0", lastMem = "0.0", lastSessionHours = "0", lastSessionEnergy = "0", lastLifeHours = "0", lastLifeEnergy = "0";
+
 const os = require('os');
 let stressProcesses = [];
 
@@ -47,7 +50,7 @@ app.post('/api/stress_test', (req, res) => {
 
         setTimeout(() => {
             stressProcesses.forEach(p => {
-                try { p.kill(); } catch(e){}
+                try { p.kill('SIGKILL'); } catch(e){}
             });
             stressProcesses = [];
             console.log('[Host] REAL CPU Stress Test Concluded. All child processes destroyed.');
@@ -77,17 +80,25 @@ app.get('/api/telemetry', async (req, res) => {
         // Session ROI Math
         const sessionHours = (hoursActive * 1.4).toFixed(3); 
         const sessionEnergy = (hoursActive * 85).toFixed(2); 
-
-        // Lifetime ROI Math
-        const lifeHours = (lifetimeStats.hours + parseFloat(sessionHours)).toFixed(1);
-        const lifeEnergy = (lifetimeStats.energy + parseFloat(sessionEnergy)).toFixed(1);
+        
+        // Other metrics throttle logic (update every 5s)
+        const now = Date.now();
+        if (now - lastOtherUpdate > 4800) {
+            lastCpu = load.toFixed(1);
+            lastMem = ((memData.active / memData.total) * 100).toFixed(1);
+            lastSessionHours = sessionHours;
+            lastSessionEnergy = sessionEnergy;
+            lastLifeHours = (lifetimeStats.hours + parseFloat(sessionHours)).toFixed(1);
+            lastLifeEnergy = (lifetimeStats.energy + parseFloat(sessionEnergy)).toFixed(1);
+            lastOtherUpdate = now;
+        }
 
         res.json({
-            cpuLoad: load.toFixed(1),
-            memoryUsage: ((memData.active / memData.total) * 100).toFixed(1),
+            cpuLoad: lastCpu,
+            memoryUsage: lastMem,
             temperature: estimatedTemp.toFixed(1),
-            sessionHours, sessionEnergy,
-            lifeHours, lifeEnergy
+            sessionHours: lastSessionHours, sessionEnergy: lastSessionEnergy,
+            lifeHours: lastLifeHours, lifeEnergy: lastLifeEnergy
         });
     } catch (e) {
         res.status(500).json({ error: 'Failed to fetch telemetry' });
@@ -135,7 +146,7 @@ app.post('/api/perimeter', (req, res) => {
         }
     } else {
         if (pulseProcess) {
-            pulseProcess.kill();
+            try { pulseProcess.kill(); } catch(e){}
             pulseProcess = null;
         }
         if (process.platform === 'win32') {
@@ -178,10 +189,10 @@ app.listen(PORT, () => {
     
     if (process.platform === 'win32') {
         // Launch as a standalone borderless native app using Edge/Chrome
-        exec(`start msedge --app=${startUrl} --window-size=400,720`, (err) => {
+        exec(`start msedge --app="${startUrl}"`, (err) => {
             if (err) {
-                exec(`start chrome --app=${startUrl} --window-size=400,720`, (err2) => {
-                    if (err2) exec(`start ${startUrl}`); // Fallback to normal browser
+                exec(`start chrome --app="${startUrl}"`, (err2) => {
+                    if (err2) exec(`start "${startUrl}"`); // Fallback to normal browser
                 });
             }
         });
