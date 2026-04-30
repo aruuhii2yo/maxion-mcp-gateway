@@ -21,6 +21,13 @@ app.get('/', (req, res) => {
 
 let engineStartTime = Date.now();
 let isEngineOn = true;
+let isAutoRenew = true;
+
+const dbPath = path.join(__dirname, 'lifetime_metrics.json');
+let lifetimeStats = { hours: 0, energy: 0 };
+if (require('fs').existsSync(dbPath)) {
+    try { lifetimeStats = JSON.parse(require('fs').readFileSync(dbPath, 'utf8')); } catch(e){}
+}
 
 // Telemetry endpoint
 app.get('/api/telemetry', async (req, res) => {
@@ -38,16 +45,20 @@ app.get('/api/telemetry', async (req, res) => {
 
         const hoursActive = isEngineOn ? (Date.now() - engineStartTime) / 3600000 : 0;
         
-        // Ecological ROI Math
-        const hoursGained = (hoursActive * 1.4).toFixed(3); // 40% performance gain
-        const energySaved = (hoursActive * 85).toFixed(2);  // 85 Watts saved per hour
+        // Session ROI Math
+        const sessionHours = (hoursActive * 1.4).toFixed(3); 
+        const sessionEnergy = (hoursActive * 85).toFixed(2); 
+
+        // Lifetime ROI Math
+        const lifeHours = (lifetimeStats.hours + parseFloat(sessionHours)).toFixed(1);
+        const lifeEnergy = (lifetimeStats.energy + parseFloat(sessionEnergy)).toFixed(1);
 
         res.json({
             cpuLoad: load.toFixed(1),
             memoryUsage: ((memData.active / memData.total) * 100).toFixed(1),
             temperature: estimatedTemp.toFixed(1),
-            hoursGained: hoursGained,
-            energySaved: energySaved
+            sessionHours, sessionEnergy,
+            lifeHours, lifeEnergy
         });
     } catch (e) {
         res.status(500).json({ error: 'Failed to fetch telemetry' });
@@ -62,13 +73,18 @@ app.post('/api/toggle', (req, res) => {
         engineStartTime = Date.now();
         console.log('[Host] Optimization ENABLED. Rust Engine Active.');
     } else {
+        if (isEngineOn) {
+            // Save current session to lifetime before turning off
+            const sessionH = ((Date.now() - engineStartTime) / 3600000);
+            lifetimeStats.hours += sessionH * 1.4;
+            lifetimeStats.energy += sessionH * 85;
+            require('fs').writeFileSync(dbPath, JSON.stringify(lifetimeStats));
+        }
         isEngineOn = false;
         console.log('[Host] Optimization DISABLED. Rust Engine Halted.');
     }
     res.json({ success: true, state });
 });
-
-let isAutoRenew = true;
 
 app.post('/api/settings', (req, res) => {
     if (req.query.autoRenew !== undefined) {
@@ -82,9 +98,16 @@ app.get('/api/status', (req, res) => {
     res.json({ isEngineOn, isAutoRenew });
 });
 
-// Keep process alive indefinitely
+// Keep process alive indefinitely and save state periodically
 setInterval(() => {
-    // Heartbeat to prevent the app from ever sleeping while active
+    if (isEngineOn) {
+        const sessionH = ((Date.now() - engineStartTime) / 3600000);
+        const tempStats = {
+            hours: lifetimeStats.hours + (sessionH * 1.4),
+            energy: lifetimeStats.energy + (sessionH * 85)
+        };
+        require('fs').writeFileSync(dbPath, JSON.stringify(tempStats));
+    }
 }, 60000);
 
 app.listen(PORT, () => {

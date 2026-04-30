@@ -74,12 +74,18 @@
 
         <div class="grid" style="grid-template-columns: 1fr 1fr; margin-top:-5px;">
             <div class="card" style="border-color: rgba(0,242,255,0.2);">
-                <div style="font-size:0.7rem; color:#00f2ff; letter-spacing:1px;">HOURS GAINED</div>
-                <div class="val" id="hours" style="color:#00f2ff;">--</div>
+                <div style="font-size:0.7rem; color:#00f2ff; letter-spacing:1px; margin-bottom:4px;">HOURS GAINED</div>
+                <div class="val" style="color:#00f2ff; font-size: 1.2rem;">
+                    <span id="hours">--</span><br>
+                    <span style="font-size: 0.65rem; color: rgba(0,242,255,0.6);">LIFETIME: <span id="lifeHours">--</span></span>
+                </div>
             </div>
             <div class="card" style="border-color: rgba(0,242,255,0.2);">
-                <div style="font-size:0.7rem; color:#00f2ff; letter-spacing:1px;">ENERGY SAVED</div>
-                <div class="val" id="energy" style="color:#00f2ff;">-- W</div>
+                <div style="font-size:0.7rem; color:#00f2ff; letter-spacing:1px; margin-bottom:4px;">ENERGY SAVED</div>
+                <div class="val" style="color:#00f2ff; font-size: 1.2rem;">
+                    <span id="energy">--</span> W<br>
+                    <span style="font-size: 0.65rem; color: rgba(0,242,255,0.6);">LIFETIME: <span id="lifeEnergy">--</span> W</span>
+                </div>
             </div>
         </div>
 
@@ -135,8 +141,11 @@
                 document.getElementById('mem').innerText = data.memoryUsage + '%';
                 document.getElementById('temp').innerHTML = `${c.toFixed(1)}°C<br><span style="font-size:0.7rem; color:#aaa;">${f.toFixed(1)}°F</span>`;
                 
-                document.getElementById('hours').innerText = data.hoursGained;
-                document.getElementById('energy').innerText = data.energySaved + ' W';
+                document.getElementById('hours').innerText = data.sessionHours;
+                document.getElementById('lifeHours').innerText = data.lifeHours;
+                
+                document.getElementById('energy').innerText = data.sessionEnergy;
+                document.getElementById('lifeEnergy').innerText = data.lifeEnergy;
 
                 // Chart Logic (Range roughly 30C to 90C)
                 let tempPercent = ((c - 30) / 60) * 100;
