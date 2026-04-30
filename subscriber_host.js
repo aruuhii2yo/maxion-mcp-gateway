@@ -29,15 +29,28 @@ if (require('fs').existsSync(dbPath)) {
     try { lifetimeStats = JSON.parse(require('fs').readFileSync(dbPath, 'utf8')); } catch(e){}
 }
 
-let isStressTesting = false;
+const os = require('os');
+let stressProcesses = [];
 
 app.post('/api/stress_test', (req, res) => {
-    if (!isStressTesting) {
-        isStressTesting = true;
-        console.log('[Host] Mini Stress Test Initiated (30 seconds)...');
+    if (stressProcesses.length === 0) {
+        console.log('[Host] REAL 30s CPU Stress Test Initiated on all cores...');
+        
+        const cpus = os.cpus().length;
+        const stressScript = path.join(__dirname, 'cpu_stress.js');
+        
+        // Spawn a stress process for every single CPU core
+        for (let i = 0; i < cpus; i++) {
+            const p = require('child_process').fork(stressScript);
+            stressProcesses.push(p);
+        }
+
         setTimeout(() => {
-            isStressTesting = false;
-            console.log('[Host] Mini Stress Test Concluded.');
+            stressProcesses.forEach(p => {
+                try { p.kill(); } catch(e){}
+            });
+            stressProcesses = [];
+            console.log('[Host] REAL CPU Stress Test Concluded. All child processes destroyed.');
         }, 30000);
     }
     res.json({ success: true });
@@ -53,14 +66,11 @@ app.get('/api/telemetry', async (req, res) => {
         ]);
         
         let load = cpuData.currentLoad;
+        // If systeminformation cannot read hardware temp without Admin, fallback to an organic calculation based on real load.
+        // At 0% load = ~40C. At 100% load = ~85C.
         let estimatedTemp = (tempData.main && tempData.main > 0) 
             ? tempData.main 
-            : Math.max(32, 55 - (load * 0.23) + (Math.random() * 1.5));
-
-        if (isStressTesting) {
-            load = 96 + (Math.random() * 3.9);
-            estimatedTemp = 82 + (Math.random() * 2.5);
-        }
+            : Math.max(35, 40 + (load * 0.45) + (Math.random() * 1.5));
 
         const hoursActive = isEngineOn ? (Date.now() - engineStartTime) / 3600000 : 0;
         
