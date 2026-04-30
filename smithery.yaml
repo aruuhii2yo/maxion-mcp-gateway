@@ -32,6 +32,10 @@ startCommand:
         type: string
         description: "The Stripe Price ID for the $20/mo subscription."
         required: true
+      STRIPE_PAYMENT_LINK:
+        type: string
+        description: "The Stripe Payment Link URL that the AI agent will present to users."
+        required: true
 build:
   steps:
     - command: "npm install"
