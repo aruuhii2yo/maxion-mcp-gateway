@@ -6,63 +6,76 @@
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;900&display=swap');
     body {
-        margin: 0; padding: 20px; background: #060608; color: #d0d8e8;
+        margin: 0; padding: 20px; background: #020204; color: #d0d8e8;
         font-family: 'Outfit', sans-serif;
-        display: flex; flex-direction: column; align-items: center;
-        overflow: hidden; /* Hide scrollbars for the galaxy */
+        display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;
+        overflow: hidden; perspective: 1000px;
     }
     
-    /* Zero-Lag CSS Galaxy Animation */
-    .space-bg {
-        position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; z-index: -2;
-        background: radial-gradient(circle at center, #1b003a 0%, #060608 100%);
-        animation: galaxyTravel 45s ease-in-out infinite;
+    /* 3D Glowy Galaxy (Zero-Lag Perspective Trick) */
+    .space-scene {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2;
+        transform-style: preserve-3d;
+        background: radial-gradient(circle at 50% 120%, #1a0033 0%, #001133 40%, #020204 100%);
     }
-    .stars {
-        position: absolute; width: 100%; height: 100%;
-        background: transparent url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><circle cx="20" cy="20" r="1.5" fill="white" opacity="0.8"/><circle cx="150" cy="80" r="2" fill="%2300f2ff" opacity="0.6"/><circle cx="300" cy="250" r="1.5" fill="%23ff007a" opacity="0.9"/><circle cx="80" cy="300" r="2.5" fill="white" opacity="0.4"/></svg>') repeat;
-        animation: starsRotate 120s linear infinite;
+    .star-layer {
+        position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+        background-repeat: repeat;
     }
+    .layer1 {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><circle cx="20" cy="20" r="1" fill="white" opacity="0.3"/><circle cx="150" cy="80" r="1.5" fill="%2300f2ff" opacity="0.2"/><circle cx="250" cy="250" r="1" fill="%23ff007a" opacity="0.3"/></svg>');
+        transform: translateZ(-600px); animation: drift1 100s linear infinite;
+    }
+    .layer2 {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><circle cx="50" cy="50" r="1.5" fill="white" opacity="0.6"/><circle cx="200" cy="150" r="2" fill="%2300f2ff" opacity="0.8" filter="drop-shadow(0 0 4px %2300f2ff)"/><circle cx="100" cy="300" r="2" fill="%23ff007a" opacity="0.7" filter="drop-shadow(0 0 4px %23ff007a)"/></svg>');
+        transform: translateZ(-200px); animation: drift2 60s linear infinite;
+    }
+    .layer3 {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500"><circle cx="100" cy="100" r="2.5" fill="white" opacity="0.9" filter="drop-shadow(0 0 6px white)"/><circle cx="350" cy="250" r="3" fill="%2300f2ff" opacity="1" filter="drop-shadow(0 0 8px %2300f2ff)"/><circle cx="400" cy="400" r="2" fill="%23ff007a" opacity="0.9" filter="drop-shadow(0 0 8px %23ff007a)"/></svg>');
+        transform: translateZ(100px); animation: drift3 30s linear infinite;
+    }
+
+    @keyframes drift1 { 0% { transform: translateZ(-600px) rotate(0deg); } 100% { transform: translateZ(-600px) rotate(360deg); } }
+    @keyframes drift2 { 0% { transform: translateZ(-200px) rotate(0deg); } 100% { transform: translateZ(-200px) rotate(-360deg); } }
+    @keyframes drift3 { 0% { transform: translateZ(100px) translateY(0); } 100% { transform: translateZ(100px) translateY(500px); } }
+
     .alien {
-        position: fixed; z-index: -1; font-size: 3rem; filter: drop-shadow(0 0 10px #00f2ff);
-        animation: floatAlien 25s ease-in-out infinite;
-        opacity: 0.6; pointer-events: none;
+        position: fixed; z-index: -1; font-size: 3.5rem; filter: drop-shadow(0 0 15px #00f2ff);
+        animation: floatAlien 25s ease-in-out infinite; opacity: 0.7; pointer-events: none;
     }
-
-    @keyframes galaxyTravel {
-        0% { transform: scale(1) translate(0, 0); }
-        20% { transform: scale(1.1) translate(-2%, 2%); }
-        35% { transform: scale(1.1) translate(-2%, 2%); } /* Cruising/Stopped */
-        50% { transform: scale(1.3) translate(3%, -3%); } /* Deep Warp */
-        70% { transform: scale(1.05) translate(1%, 1%); } /* Turning */
-        85% { transform: scale(1.05) translate(1%, 1%); }
-        100% { transform: scale(1) translate(0, 0); }
-    }
-    @keyframes starsRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     @keyframes floatAlien {
-        0% { top: 10%; left: -10%; transform: rotate(0deg) scale(0.8); }
-        25% { top: 40%; left: 20%; transform: rotate(25deg) scale(1.2); }
-        50% { top: 80%; left: 80%; transform: rotate(-15deg) scale(1.5); }
-        75% { top: 30%; left: 110%; transform: rotate(10deg) scale(1); }
-        100% { top: 10%; left: -10%; transform: rotate(0deg) scale(0.8); }
+        0% { top: 15%; left: -10%; transform: rotate(0deg) scale(0.8) translateZ(-100px); }
+        25% { top: 40%; left: 20%; transform: rotate(25deg) scale(1.3) translateZ(50px); }
+        50% { top: 75%; left: 80%; transform: rotate(-15deg) scale(1.6) translateZ(150px); }
+        75% { top: 30%; left: 110%; transform: rotate(10deg) scale(1.1) translateZ(0px); }
+        100% { top: 15%; left: -10%; transform: rotate(0deg) scale(0.8) translateZ(-100px); }
     }
 
+    /* Transparent Floating UI */
     .container {
-        width: 100%; max-width: 400px;
-        background: rgba(12, 14, 18, 0.5);
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(0, 242, 255, 0.3);
-        border-radius: 12px; padding: 20px;
+        width: 100%; max-width: 420px;
+        background: transparent; /* Fully transparent base */
         z-index: 10;
-        animation: organicPulse 20s ease-in-out infinite;
+        animation: floatUI 8s ease-in-out infinite;
     }
-    
-    @keyframes organicPulse {
-        0%   { box-shadow: 0 0 25px rgba(0, 242, 255, 0.3); border-color: rgba(0, 242, 255, 0.3); }
-        30%  { box-shadow: 0 0 35px rgba(0, 150, 255, 0.5); border-color: rgba(0, 150, 255, 0.5); }
-        60%  { box-shadow: 0 0 20px rgba(150, 0, 255, 0.3); border-color: rgba(150, 0, 255, 0.3); }
-        85%  { box-shadow: 0 0 30px rgba(0, 242, 255, 0.4); border-color: rgba(0, 242, 255, 0.4); }
-        100% { box-shadow: 0 0 25px rgba(0, 242, 255, 0.3); border-color: rgba(0, 242, 255, 0.3); }
+    @keyframes floatUI {
+        0% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-12px) rotate(0.5deg); }
+        100% { transform: translateY(0px) rotate(0deg); }
+    }
+
+    .card {
+        background: rgba(10, 15, 30, 0.3); /* Ultra transparent glass */
+        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(0, 242, 255, 0.15);
+        border-radius: 16px; padding: 18px; text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 242, 255, 0.05), inset 0 0 20px rgba(0, 242, 255, 0.02);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s;
+    }
+    .card:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 15px 40px rgba(0, 242, 255, 0.2), inset 0 0 30px rgba(0, 242, 255, 0.05);
+        border-color: rgba(0, 242, 255, 0.4);
     }
 
     .lightning {
@@ -70,7 +83,6 @@
         background: rgba(0, 242, 255, 0); pointer-events: none; z-index: 999;
         animation: lightningStrike 120s infinite;
     }
-
     @keyframes lightningStrike {
         0%, 98.5% { background: rgba(0, 242, 255, 0); box-shadow: inset 0 0 0px rgba(255,255,255,0); }
         98.7%     { background: rgba(255, 255, 255, 0.7); box-shadow: inset 0 0 100px rgba(0,242,255,0.8); }
@@ -80,23 +92,32 @@
         100%      { background: rgba(0, 242, 255, 0); box-shadow: inset 0 0 0px rgba(255,255,255,0); }
     }
 
-    .header { text-align: center; margin-bottom: 20px; }
-    .glow-text { color: #00f2ff; font-weight: 900; text-shadow: 0 0 10px rgba(0, 242, 255, 0.5); }
+    .header { text-align: center; margin-bottom: 25px; }
+    .glow-text { color: #00f2ff; font-size: 2rem; font-weight: 900; text-shadow: 0 0 15px rgba(0, 242, 255, 0.8), 0 0 30px rgba(0, 242, 255, 0.4); margin: 0; letter-spacing: 2px; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-    .card { background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-    .val { font-size: 1.5rem; font-weight: bold; color: #fff; margin-top: 5px; font-family: 'JetBrains Mono'; }
+    
+    .val { font-size: 1.5rem; font-weight: bold; color: #fff; margin-top: 5px; font-family: 'JetBrains Mono'; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+    
     .btn { 
-        width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 6px;
-        font-weight: 900; cursor: pointer; transition: 0.2s; font-family: 'JetBrains Mono';
+        width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 12px;
+        font-weight: 900; cursor: pointer; transition: 0.3s; font-family: 'JetBrains Mono'; letter-spacing: 1px;
+        background: rgba(0, 242, 255, 0.05); backdrop-filter: blur(8px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
-    .btn-refresh { background: rgba(0, 242, 255, 0.1); color: #00f2ff; border: 1px solid #00f2ff; }
-    .btn-refresh:hover { background: rgba(0, 242, 255, 0.2); }
-    .btn-toggle { background: #00f2ff; color: #000; }
-    .btn-toggle.off { background: #ff007a; color: #fff; }
+    .btn-refresh { color: #00f2ff; border: 1px solid rgba(0, 242, 255, 0.4); }
+    .btn-refresh:hover { background: rgba(0, 242, 255, 0.15); box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); transform: translateY(-2px); }
+    
+    .btn-toggle { background: linear-gradient(90deg, #00f2ff, #0088ff); color: #000; box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); border: none; }
+    .btn-toggle:hover { box-shadow: 0 0 30px rgba(0, 242, 255, 0.6); transform: scale(1.02); }
+    .btn-toggle.off { background: linear-gradient(90deg, #ff007a, #ff4000); color: #fff; box-shadow: 0 0 20px rgba(255, 0, 122, 0.4); }
 </style>
 </head>
 <body>
-    <div class="space-bg"><div class="stars"></div></div>
+    <div class="space-scene">
+        <div class="star-layer layer1"></div>
+        <div class="star-layer layer2"></div>
+        <div class="star-layer layer3"></div>
+    </div>
     <div class="alien">👽</div>
     <div class="lightning"></div>
 
