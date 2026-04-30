@@ -51,13 +51,26 @@
         100% { top: 15%; left: -10%; transform: rotate(0deg) scale(0.8) translateZ(-100px); }
     }
 
-    /* Transparent Floating UI */
+    /* Glassmorphism Floating UI with Organic Pulse */
     .container {
         width: 100%; max-width: 420px;
-        background: transparent; /* Fully transparent base */
+        background: rgba(10, 15, 30, 0.5);
+        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border-radius: 16px; padding: 25px;
         z-index: 10;
-        animation: floatUI 8s ease-in-out infinite;
+        border: 1px solid rgba(0, 242, 255, 0.3);
+        animation: floatUI 8s ease-in-out infinite, organicPulse 20s ease-in-out infinite;
     }
+    
+    @keyframes organicPulse {
+        /* Resting State More (Baseline 25px spread, high opacity), Reach Less (Max 35px) */
+        0%   { box-shadow: 0 0 25px rgba(0, 242, 255, 0.4); border-color: rgba(0, 242, 255, 0.3); }
+        30%  { box-shadow: 0 0 35px rgba(0, 150, 255, 0.6); border-color: rgba(0, 150, 255, 0.5); }
+        60%  { box-shadow: 0 0 25px rgba(150, 0, 255, 0.4); border-color: rgba(150, 0, 255, 0.3); }
+        85%  { box-shadow: 0 0 35px rgba(0, 242, 255, 0.5); border-color: rgba(0, 242, 255, 0.4); }
+        100% { box-shadow: 0 0 25px rgba(0, 242, 255, 0.4); border-color: rgba(0, 242, 255, 0.3); }
+    }
+
     @keyframes floatUI {
         0% { transform: translateY(0px) rotate(0deg); }
         50% { transform: translateY(-12px) rotate(0.5deg); }
@@ -65,31 +78,30 @@
     }
 
     .card {
-        background: rgba(10, 15, 30, 0.3); /* Ultra transparent glass */
-        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(0, 242, 255, 0.15);
-        border-radius: 16px; padding: 18px; text-align: center;
-        box-shadow: 0 10px 30px rgba(0, 242, 255, 0.05), inset 0 0 20px rgba(0, 242, 255, 0.02);
-        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px; padding: 15px; text-align: center;
+        transition: transform 0.4s, box-shadow 0.4s;
     }
     .card:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 15px 40px rgba(0, 242, 255, 0.2), inset 0 0 30px rgba(0, 242, 255, 0.05);
-        border-color: rgba(0, 242, 255, 0.4);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 10px 20px rgba(0, 242, 255, 0.2);
+        border-color: rgba(0, 242, 255, 0.3);
     }
 
+    /* Cinematic Lightning Burst (Strikes every 60s so it is noticeable) */
     .lightning {
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(0, 242, 255, 0); pointer-events: none; z-index: 999;
-        animation: lightningStrike 120s infinite;
+        background: rgba(255, 255, 255, 0); pointer-events: none; z-index: 999;
+        animation: lightningStrike 60s infinite;
     }
     @keyframes lightningStrike {
-        0%, 98.5% { background: rgba(0, 242, 255, 0); box-shadow: inset 0 0 0px rgba(255,255,255,0); }
-        98.7%     { background: rgba(255, 255, 255, 0.7); box-shadow: inset 0 0 100px rgba(0,242,255,0.8); }
-        98.9%     { background: rgba(0, 242, 255, 0.2); }
-        99.2%     { background: rgba(255, 255, 255, 0.9); box-shadow: inset 0 0 150px rgba(0,242,255,1); }
-        99.5%     { background: rgba(0, 242, 255, 0.1); }
-        100%      { background: rgba(0, 242, 255, 0); box-shadow: inset 0 0 0px rgba(255,255,255,0); }
+        0%, 98.5% { background: rgba(255, 255, 255, 0); }
+        98.7%     { background: rgba(255, 255, 255, 0.9); box-shadow: inset 0 0 150px rgba(0,242,255,1); }
+        98.9%     { background: rgba(0, 242, 255, 0.3); }
+        99.2%     { background: rgba(255, 255, 255, 1); box-shadow: inset 0 0 250px rgba(0,242,255,1); }
+        99.5%     { background: rgba(0, 242, 255, 0.2); }
+        100%      { background: rgba(255, 255, 255, 0); }
     }
 
     .header { text-align: center; margin-bottom: 25px; }
