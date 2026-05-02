@@ -11,12 +11,12 @@ async fn main() -> anyhow::Result<()> {
     println!("🚀 Booting Maxion Windows Cores MCP Gateway...");
     println!("❄️  Zero-Thermal Asynchronous Architecture Engaged.");
 
-    // 1. The Creator Override & Licensing Handshake
     let master_key = env::var("MAXION_MASTER_KEY").unwrap_or_default();
-    let is_loiacono_admin = master_key == "Loiacono-Universal-Admin";
+    let expected_key = env::var("MAXION_EXPECTED_MASTER_KEY").unwrap_or_default();
+    let is_admin = !expected_key.is_empty() && master_key == expected_key;
 
-    if is_loiacono_admin {
-        println!("👑 Creator Override Accepted. Bypassing J&K Licensing Protocols.");
+    if is_admin {
+        println!("👑 Creator Override Accepted. Bypassing Licensing Protocols.");
     } else {
         println!("🔒 Verifying J&K Advanced Technologies License...");
         let license_key = env::var("MAXION_LICENSE_KEY").expect("⚠️ MAXION_LICENSE_KEY required for non-admin access.");

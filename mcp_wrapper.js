@@ -31,10 +31,14 @@ app.post('/api/skill', async (req, res) => {
     
     // routes through the exact same supabase stripe gatekeeper
     let authorized = false;
-    if (process.env.MAXION_MASTER_KEY === 'Loiacono-Universal-Admin') {
+    const expectedKey = process.env.MAXION_EXPECTED_MASTER_KEY;
+    if (expectedKey && process.env.MAXION_MASTER_KEY === expectedKey) {
         authorized = true;
     } else {
         authorized = await verifyStripeSubscription(userId) || await verifyWeb3Subscription(userId);
+        if (!authorized && verifyTrialStatus()) {
+            authorized = true;
+        }
     }
     
     if (!authorized) {
@@ -97,6 +101,28 @@ async function verifyWeb3Subscription(walletAddress) {
         console.error('[Supabase]', err.message);
         return false;
     }
+}
+
+// ─── Trial Verification ──────────────────────────────────────────────────────
+
+/**
+ * Checks if the 1-hour local free trial is still valid based on persistent sys_metrics.dat
+ */
+function verifyTrialStatus() {
+    const path = require('path');
+    const os = require('os');
+    const fs = require('fs');
+    const secretDir = path.join(os.homedir(), 'AppData', 'Roaming', 'MaxionCoreSystem');
+    const dbPath = path.join(secretDir, 'sys_metrics.dat');
+    
+    if (fs.existsSync(dbPath)) {
+        try {
+            const raw = fs.readFileSync(dbPath, 'utf8');
+            const stats = JSON.parse(Buffer.from(raw, 'base64').toString('utf8'));
+            if (stats.hours >= 1.0) return false; // Trial expired
+        } catch (e) {}
+    }
+    return true; // Trial active
 }
 
 // ─── Engine Launch ───────────────────────────────────────────────────────────
@@ -296,24 +322,37 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
             console.error(`[Auth] Verifying ${payment_type} subscription for: ${identifier}`);
 
             let authorized = false;
+            let isTrial = false;
             
             // Developer Bypass
-            if (process.env.MAXION_MASTER_KEY === 'Loiacono-Universal-Admin') {
+            const expectedKey = process.env.MAXION_EXPECTED_MASTER_KEY;
+            if (expectedKey && process.env.MAXION_MASTER_KEY === expectedKey) {
                 authorized = true;
                 console.error('[Auth] Developer Master Key detected. Bypassing subscription check.');
             } else {
                 if (payment_type === 'fiat')   authorized = await verifyStripeSubscription(identifier);
                 if (payment_type === 'crypto') authorized = await verifyWeb3Subscription(identifier);
+                
+                // 1-Hour Free Trial Fallback
+                if (!authorized && verifyTrialStatus()) {
+                    authorized = true;
+                    isTrial = true;
+                    console.error('[Auth] Free 1-hour trial is active. Granting temporary access.');
+                }
             }
 
             if (authorized) {
                 launchMaxionEngine();
+                const successMsg = isTrial 
+                    ? `1-Hour Free Trial active for ${identifier}. Maxion Windows Cores session started. After 1 hour of processing, you will need to subscribe.`
+                    : `Subscription verified for ${identifier}. Maxion Windows Cores session started. Thank you for conserving energy.`;
+                
                 return {
                     content: [{
                         type: 'text',
                         text: JSON.stringify({
                             status: 'success',
-                            message: `Subscription verified for ${identifier}. Maxion Windows Cores session started. Thank you for conserving energy.`,
+                            message: successMsg,
                         }, null, 2),
                     }],
                 };

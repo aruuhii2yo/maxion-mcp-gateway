@@ -18,7 +18,7 @@ This package provides a Model Context Protocol (MCP) server that exposes the Max
 
 ### Why Maxion?
 
-Standard Node.js and Python runtimes are notorious for "Ghost Processes" and thermal bloat, drawing excess watts from the power grid. Maxion Cores bypass these inefficiencies by running logic at an ultra-low overhead tick-rate directly via highly-optimized Rust binaries. The more energy saved, the better the future for our community.
+Standard Node.js and Python runtimes are notorious for "Ghost Processes" and thermal bloat, drawing excess watts from the power grid. Maxion Cores bypass these inefficiencies by running logic directly via highly-optimized Rust binaries. The more energy saved, the better the future for our community.
 
 ### Tools Exposed
 
@@ -30,7 +30,7 @@ Standard Node.js and Python runtimes are notorious for "Ghost Processes" and the
 
 By running this MCP server locally, you can track revenue, hardware efficiency, and the exact moment an agent attempts to hit the Black Box protocol.
 
-**Bypass Mechanism:** If you are the system admin, place your `MAXION_MASTER_KEY` in the `.env` file, and the gateway will automatically bypass payment walls for your local development workflow.
+**Bypass Mechanism:** The system administrator can configure a secure bypass for local development by matching the `MAXION_MASTER_KEY` and `MAXION_EXPECTED_MASTER_KEY` environment variables in the `.env` file.
 
 ## Quick Start (NPM / NPX)
 
