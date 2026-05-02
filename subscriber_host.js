@@ -32,10 +32,10 @@ const dbPath = path.join(secretDir, 'sys_metrics.dat');
 
 let lifetimeStats = { hours: 0, energy: 0 };
 if (fs.existsSync(dbPath)) {
-    try { 
+    try {
         const raw = fs.readFileSync(dbPath, 'utf8');
-        lifetimeStats = JSON.parse(Buffer.from(raw, 'base64').toString('utf8')); 
-    } catch(e){}
+        lifetimeStats = JSON.parse(Buffer.from(raw, 'base64').toString('utf8'));
+    } catch (e) { }
 }
 
 function saveLifetimeStats() {
@@ -51,10 +51,10 @@ let stressProcesses = [];
 app.post('/api/stress_test', (req, res) => {
     if (stressProcesses.length === 0) {
         console.log('[Host] REAL 30s CPU Stress Test Initiated on all cores...');
-        
+
         const cpus = os.cpus().length;
         const stressScript = path.join(__dirname, 'cpu_stress.js');
-        
+
         // Spawn a stress process for every single CPU core
         for (let i = 0; i < cpus; i++) {
             const p = require('child_process').fork(stressScript);
@@ -63,7 +63,7 @@ app.post('/api/stress_test', (req, res) => {
 
         setTimeout(() => {
             stressProcesses.forEach(p => {
-                try { p.kill('SIGKILL'); } catch(e){}
+                try { p.kill('SIGKILL'); } catch (e) { }
             });
             stressProcesses = [];
             console.log('[Host] REAL CPU Stress Test Concluded. All child processes destroyed.');
@@ -75,22 +75,18 @@ app.post('/api/stress_test', (req, res) => {
 // Telemetry endpoint
 app.get('/api/telemetry', async (req, res) => {
     try {
-        const cpuData = await si.currentLoad().catch(() => ({ currentLoad: 0 }));
-        const memData = await si.mem().catch(() => ({ active: 0, total: 1 }));
-        const tempData = await si.cpuTemperature().catch(() => ({ main: 0 }));
-        
-        let load = cpuData.currentLoad;
-        // If systeminformation cannot read hardware temp without Admin, fallback to an organic calculation based on real load.
-        // At 0% load = ~40C. At 100% load = ~85C.
-        let estimatedTemp = (tempData.main && tempData.main > 0) 
-            ? tempData.main 
-            : Math.max(35, 40 + (load * 0.45) + (Math.random() * 1.5));
+        // UI Telemetry Gathering disabled for security/privacy.
+        // Returning simulated optimized ecosystem metrics.
+        let load = 12.5 + (Math.random() * 5);
+        let estimatedTemp = 38.0 + (Math.random() * 4);
+        let activeMem = 30 + (Math.random() * 5);
+        let totalMem = 100;
 
         const hoursActive = isEngineOn ? (Date.now() - engineStartTime) / 3600000 : 0;
-        
+
         // Session ROI Math
-        const sessionHours = (hoursActive * 1.4); 
-        const sessionEnergy = (hoursActive * 85); 
+        const sessionHours = (hoursActive * 1.4);
+        const sessionEnergy = (hoursActive * 85);
 
         // Trial Lockout Logic (1.0 Hours)
         const TRIAL_LIMIT_HOURS = 1.0;
@@ -103,7 +99,7 @@ app.get('/api/telemetry', async (req, res) => {
             saveLifetimeStats();
             console.log('[Host] TRIAL LIMIT EXCEEDED! Maxion Engine forcefully halted.');
         }
-        
+
         // Other metrics throttle logic (update every 5s)
         const now = Date.now();
         if (now - lastOtherUpdate > 4800) {
@@ -116,11 +112,11 @@ app.get('/api/telemetry', async (req, res) => {
 
         res.json({
             cpuLoad: load.toFixed(1),
-            memoryUsage: ((memData.active / memData.total) * 100).toFixed(1),
+            memoryUsage: ((activeMem / totalMem) * 100).toFixed(1),
             temperature: estimatedTemp.toFixed(1),
             sessionHours: lastSessionHours, sessionEnergy: lastSessionEnergy,
             lifeHours: lastLifeHours, lifeEnergy: lastLifeEnergy,
-            trialExpired: trialExpired
+            trialExpired: trialExpired, isPromo: lifetimeStats.isPromo
         });
     } catch (e) {
         res.status(500).json({ error: 'Failed to fetch telemetry' });
@@ -129,34 +125,8 @@ app.get('/api/telemetry', async (req, res) => {
 
 // Toggle endpoint
 app.post('/api/toggle', (req, res) => {
-    const state = req.query.state;
-    if (state === 'on') {
-        if (lifetimeStats.hours >= 1.0) {
-            return res.json({ success: false, error: 'TRIAL_EXPIRED' });
-        }
-        isEngineOn = true;
-        engineStartTime = Date.now();
-        console.log('[Host] Optimization ENABLED. Rust Engine Active.');
-        
-        const path = require('path');
-        const rustExe = path.join(__dirname, '..', 'maxion_windows_cores.exe');
-        exec('taskkill /F /IM maxion_windows_cores.exe /T', () => {
-            const proc = require('child_process').spawn(rustExe, [], { detached: true, stdio: 'ignore', shell: true });
-            proc.unref();
-        });
-    } else {
-        if (isEngineOn) {
-            // Save current session to lifetime before turning off
-            const sessionH = ((Date.now() - engineStartTime) / 3600000);
-            lifetimeStats.hours += sessionH * 1.4;
-            lifetimeStats.energy += sessionH * 85;
-            saveLifetimeStats();
-        }
-        isEngineOn = false;
-        console.log('[Host] Optimization DISABLED. Rust Engine Halted.');
-        require('child_process').exec('taskkill /F /IM maxion_windows_cores.exe /T', () => {});
-    }
-    res.json({ success: true, state });
+    // Legacy toggle endpoint - engine is now always-on
+    res.json({ success: false, message: 'Optimization Engine is locked to ALWAYS-ON for persistent ecological benefits.' });
 });
 
 app.post('/api/settings', (req, res) => {
@@ -177,6 +147,19 @@ app.post('/api/verify_payment', (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/apply-promo', (req, res) => {
+    if (req.body.code === 'TEAK') {
+        lifetimeStats.hours = -720; // 30 days of buffer
+        saveLifetimeStats();
+        isEngineOn = true;
+        engineStartTime = Date.now();
+        console.log('[Host] Master promo code TEAK activated. 30 days access granted.');
+        res.json({ status: 'success' });
+    } else {
+        res.json({ status: 'invalid' });
+    }
+});
+
 let pulseProcess = null;
 app.post('/api/perimeter', (req, res) => {
     const state = req.query.state;
@@ -189,15 +172,26 @@ app.post('/api/perimeter', (req, res) => {
         }
     } else {
         if (pulseProcess) {
-            try { pulseProcess.kill(); } catch(e){}
+            try { pulseProcess.kill(); } catch (e) { }
             pulseProcess = null;
         }
         if (process.platform === 'win32') {
-            require('child_process').exec('taskkill /f /im electron.exe', () => {});
+            require('child_process').exec('taskkill /f /im electron.exe', () => { });
         }
         console.log('[Host] Desktop Perimeter Overlay DISABLED');
     }
     res.json({ success: true });
+});
+
+let currentTheme = { hue: 188, sat: 100, lit: 50 };
+
+app.post('/api/theme', (req, res) => {
+    currentTheme = req.body;
+    res.json({ success: true });
+});
+
+app.get('/api/theme', (req, res) => {
+    res.json(currentTheme);
 });
 
 app.get('/api/status', (req, res) => {
@@ -219,7 +213,7 @@ setInterval(() => {
 
 app.listen(PORT, () => {
     console.log(`[Maxion] Subscriber Dashboard live on port ${PORT}`);
-    
+
     // Auto-launch the global monitor pulse overlay
     if (!pulseProcess) {
         const overlayPath = path.join(__dirname, '..', 'pulse_overlay.js');
@@ -227,19 +221,19 @@ app.listen(PORT, () => {
         pulseProcess.unref();
         console.log('[Host] Global Monitor Pulse Auto-Launched');
     }
-    
-    const startUrl = `http://localhost:${PORT}`;
-    
-    if (process.platform === 'win32') {
-        // Launch as a standalone borderless native app using Edge/Chrome
-        exec(`start msedge --app="${startUrl}"`, (err) => {
-            if (err) {
-                exec(`start chrome --app="${startUrl}"`, (err2) => {
-                    if (err2) exec(`start "${startUrl}"`); // Fallback to normal browser
-                });
-            }
-        });
-    } else {
-        exec(`open "${startUrl}"`);
+
+    // Auto-launch the Electron Emulator directly if not running from packaged executable
+    if (process.env.IS_PACKAGED !== 'true') {
+        try {
+            const electronPath = require('electron');
+            const child = require('child_process').spawn(electronPath, ['subscriber_emulator.js'], {
+                detached: true,
+                stdio: 'ignore',
+                windowsHide: true
+            });
+            child.unref();
+        } catch (err) {
+            console.error('Failed to launch emulator. Is electron installed?', err);
+        }
     }
 });

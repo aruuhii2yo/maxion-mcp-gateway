@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 require('dotenv').config();
 
 // Cloud build safety: fallbacks prevent crashes during Smithery's environment scan
@@ -9,9 +10,44 @@ const stripe              = require('stripe')(stripeKey);
 const { createClient }    = require('@supabase/supabase-js');
 const { spawn }           = require('child_process');
 const http                = require('http');
+const express             = require('express');
+const cors                = require('cors');
 const { Server }          = require("@modelcontextprotocol/sdk/server/index.js");
 const { StdioServerTransport } = require("@modelcontextprotocol/sdk/server/stdio.js");
 const { CallToolRequestSchema, ListToolsRequestSchema } = require("@modelcontextprotocol/sdk/types.js");
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+// dashboard UI route triggered by the desktop shortcut
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/subscriber_dashboard.html');
+});
+
+// universal skill api for openai custom agents
+app.post('/api/skill', async (req, res) => {
+    const { userId, payload } = req.body;
+    
+    // routes through the exact same supabase stripe gatekeeper
+    let authorized = false;
+    if (process.env.MAXION_MASTER_KEY === 'Loiacono-Universal-Admin') {
+        authorized = true;
+    } else {
+        authorized = await verifyStripeSubscription(userId) || await verifyWeb3Subscription(userId);
+    }
+    
+    if (!authorized) {
+        return res.status(402).json({ result: { status: 'payment_required' }, message: "Payment required" });
+    }
+    
+    launchMaxionEngine();
+    return res.status(200).json({ result: { status: 'success', message: 'Engine launched' } });
+});
+
+app.listen(11012, () => {
+    console.error('Omni-channel REST API running on port 11012');
+});
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

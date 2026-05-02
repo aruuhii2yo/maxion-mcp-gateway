@@ -2,18 +2,51 @@
   "name": "maxion-mcp-gateway",
   "version": "1.0.1",
   "description": "Public bridge to the Maxion Core infrastructure using MCP.",
-  "keywords": ["mcp", "modelcontextprotocol", "energy-saving", "glama", "maxion", "rust"],
-  "main": "mcp_wrapper.js",
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "energy-saving",
+    "glama",
+    "maxion",
+    "rust"
+  ],
+  "main": "app_main.js",
+  "bin": {
+    "maxion-mcp-gateway": "./mcp_wrapper.js"
+  },
+  "scripts": {
+    "postinstall": "node generate_shortcut.js",
+    "build": "electron-builder --win nsis",
+    "start": "electron app_main.js"
+  },
+  "build": {
+    "appId": "com.maxion.core",
+    "productName": "Maxion Command Center",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": "always"
+    }
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@supabase/supabase-js": "^2.105.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "stripe": "^17.7.0",
     "systeminformation": "^5.31.5"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "electron-builder": "^25.1.8",
+    "electron": "^41.5.0",
     "typescript": "^6.0.3"
   }
 }

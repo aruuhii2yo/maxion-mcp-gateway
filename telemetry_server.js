@@ -89,7 +89,8 @@ app.listen(8080, () => {
     console.log(' MAXION HARDWARE LINK ACTIVE ON PORT 8080');
     console.log('=============================================');
     
-    // Auto-launch standalone telemetry dashboard
+    // Auto-launch standalone telemetry dashboard disabled
+    /*
     const startUrl = `http://localhost:8080`;
     const { exec } = require('child_process');
     if (process.platform === 'win32') {
@@ -101,4 +102,5 @@ app.listen(8080, () => {
             }
         });
     }
+    */
 });

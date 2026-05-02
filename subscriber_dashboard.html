@@ -9,10 +9,17 @@
         margin: 0; padding: 10px; background: #020204; color: #d0d8e8;
         font-family: 'Outfit', sans-serif;
         display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;
-        overflow: hidden; perspective: 1000px;
+        overflow-y: auto; overflow-x: hidden; perspective: 1000px;
     }
     
     /* 3D Glowy Galaxy */
+    :root {
+        --theme-hue: 188;
+        --theme-sat: 100%;
+        --theme-lit: 50%;
+        --primary: hsl(var(--theme-hue), var(--theme-sat), var(--theme-lit));
+        --primary-glow: hsla(var(--theme-hue), var(--theme-sat), var(--theme-lit), 0.5);
+    }
     .space-scene {
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2;
         transform-style: preserve-3d;
@@ -236,12 +243,30 @@
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
             <button class="btn btn-refresh" id="refreshBtn" onclick="fetchTelemetry()">REFRESH</button>
             <button class="btn btn-refresh" id="stressBtn" style="border-color: #39ff14; color: #39ff14;" onclick="triggerStressTest()">30s STRESS</button>
             <button class="btn btn-refresh" id="visualsBtn" style="border-color: #555; color: #888;" onclick="toggleVisuals()">NO PULSE</button>
         </div>
-        <button class="btn btn-toggle" id="toggleBtn" onclick="toggleEngine()">DISABLE OPTIMIZATION</button>
+        <div id="engineStatusBanner" style="width: 100%; padding: 12px; border-radius: 10px; background: rgba(0, 242, 255, 0.1); border: 1px solid #00f2ff; color: #00f2ff; text-align: center; font-weight: bold; font-family: 'JetBrains Mono'; box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); box-sizing: border-box; cursor: pointer; transition: 0.3s;">STATUS: ENGINE CONSTANT ACTIVE</div>
+        
+        <div class="card" style="margin-top: 10px; border-color: rgba(255,255,255,0.1); padding: 15px;">
+            <div style="font-size:0.7rem; color:#888; margin-bottom: 12px; letter-spacing: 1px;">THEME CUSTOMIZATION</div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="font-size: 0.65rem; color: var(--primary); text-align: left; display: flex; justify-content: space-between;">
+                    <span>HUE</span>
+                    <input type="range" id="hueSlider" min="0" max="360" value="188" onchange="updateTheme()" oninput="updateCSSOnly()" style="width: 70%; accent-color: var(--primary);">
+                </label>
+                <label style="font-size: 0.65rem; color: var(--primary); text-align: left; display: flex; justify-content: space-between;">
+                    <span>SATURATION</span>
+                    <input type="range" id="satSlider" min="0" max="100" value="100" onchange="updateTheme()" oninput="updateCSSOnly()" style="width: 70%; accent-color: var(--primary);">
+                </label>
+                <label style="font-size: 0.65rem; color: var(--primary); text-align: left; display: flex; justify-content: space-between;">
+                    <span>LIGHTNESS</span>
+                    <input type="range" id="litSlider" min="20" max="80" value="50" onchange="updateTheme()" oninput="updateCSSOnly()" style="width: 70%; accent-color: var(--primary);">
+                </label>
+            </div>
+        </div>
         
         <div class="card" style="margin-top: 10px; border-color: rgba(255,255,255,0.1); padding-bottom: 10px;">
             <div style="font-size:0.7rem; color:#888; margin-bottom: 10px; letter-spacing: 1px;">SUBSCRIPTION MANAGEMENT</div>
@@ -252,6 +277,11 @@
                     <button class="btn btn-refresh" style="margin: 0; font-size: 0.7rem; border-color: #39ff14; color: #39ff14; background: rgba(57, 255, 20, 0.1); flex: 1;" onclick="verifyPayment()">VERIFY</button>
                 </div>
             </div>
+            <div style="display: flex; gap: 5px; margin-top: 10px;">
+                <input type="text" id="promoCodeInput" placeholder="PROMO CODE" style="flex: 1; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; padding: 6px 10px; font-family: 'JetBrains Mono'; font-size: 0.8rem; text-transform: uppercase;">
+                <button class="btn btn-refresh" style="margin: 0; padding: 6px 15px; font-size: 0.7rem; width: auto;" onclick="applyPromo()">APPLY</button>
+            </div>
+            <div id="promoStatus" style="font-size: 0.65rem; margin-top: 5px; font-family: 'JetBrains Mono'; min-height: 12px;"></div>
         </div>
     </div>
 
@@ -291,8 +321,42 @@
         }
 
         function renewSubscription() {
-            // Opens the Stripe test link for renewal
-            window.open('https://buy.stripe.com/test_5kQcN4ccybvj8HNaLobbG00', '_blank');
+            // Opens the Stripe link for renewal in the system's default browser
+            const checkoutUrl = 'https://buy.stripe.com/test_5kQcN4ccybvj8HNaLobbG00';
+            try {
+                require('electron').shell.openExternal(checkoutUrl);
+            } catch(e) {
+                window.open(checkoutUrl, '_blank');
+            }
+        }
+
+        async function applyPromo() {
+            const code = document.getElementById('promoCodeInput').value.trim().toUpperCase();
+            const statusEl = document.getElementById('promoStatus');
+            statusEl.innerText = "VERIFYING...";
+            statusEl.style.color = "#888";
+            
+            try {
+                const res = await fetch('/api/apply-promo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    statusEl.innerText = "ACCESS GRANTED: 30 DAYS UNLOCKED";
+                    statusEl.style.color = "#39ff14";
+                    document.getElementById('promoCodeInput').value = "";
+                    fetchTelemetry();
+                } else {
+                    statusEl.innerText = "INVALID CODE";
+                    statusEl.style.color = "#ff007a";
+                }
+            } catch (e) {
+                statusEl.innerText = "CONNECTION ERROR";
+                statusEl.style.color = "#ff007a";
+            }
         }
 
         async function verifyPayment() {
@@ -356,7 +420,7 @@
                 document.getElementById('tempBar').style.width = tempPercent + '%';
 
                 const statusEl = document.getElementById('tempStatus');
-                const toggleBtn = document.getElementById('toggleBtn');
+                const bannerBtn = document.getElementById('engineStatusBanner');
 
                 if (data.trialExpired) {
                     isEngineOn = false;
@@ -364,16 +428,21 @@
                     statusEl.style.color = "#ff0000";
                     document.getElementById('tempBar').style.background = "linear-gradient(90deg, #ff9a00, #ff0000)";
                     
-                    toggleBtn.className = 'btn btn-toggle off';
-                    toggleBtn.innerText = 'TRIAL EXPIRED - CLICK TO RENEW';
-                    toggleBtn.style.background = 'linear-gradient(90deg, #ff0000, #990000)';
-                    toggleBtn.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.6)';
-                    toggleBtn.style.color = '#fff';
-                    toggleBtn.onclick = renewSubscription;
+                    bannerBtn.innerText = 'TRIAL EXPIRED - CLICK TO RENEW';
+                    bannerBtn.style.background = 'linear-gradient(90deg, #ff0000, #990000)';
+                    bannerBtn.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.6)';
+                    bannerBtn.style.color = '#fff';
+                    bannerBtn.onclick = renewSubscription;
                 } else if (isEngineOn) {
                     statusEl.innerText = "MAXION ENGAGED";
                     statusEl.style.color = "#00f2ff";
                     document.getElementById('tempBar').style.background = "linear-gradient(90deg, #00f2ff, #0088ff)";
+                    
+                    bannerBtn.innerText = 'STATUS: ENGINE CONSTANT ACTIVE';
+                    bannerBtn.style.background = 'rgba(0, 242, 255, 0.1)';
+                    bannerBtn.style.boxShadow = '0 0 15px rgba(0, 242, 255, 0.3)';
+                    bannerBtn.style.color = '#00f2ff';
+                    bannerBtn.onclick = null;
                 } else {
                     statusEl.innerText = "STANDARD LOAD (UNPROTECTED)";
                     statusEl.style.color = "#ff007a";
@@ -398,26 +467,30 @@
             }, 500);
         }
 
-        async function toggleEngine() {
-            const btn = document.getElementById('toggleBtn');
-            if (btn.innerText.includes('EXPIRED')) {
-                renewSubscription();
-                return;
-            }
+
+
+        function updateCSSOnly() {
+            const h = document.getElementById('hueSlider').value;
+            const s = document.getElementById('satSlider').value;
+            const l = document.getElementById('litSlider').value;
+            document.documentElement.style.setProperty('--theme-hue', h);
+            document.documentElement.style.setProperty('--theme-sat', s + '%');
+            document.documentElement.style.setProperty('--theme-lit', l + '%');
+        }
+
+        function updateTheme() {
+            const h = document.getElementById('hueSlider').value;
+            const s = document.getElementById('satSlider').value;
+            const l = document.getElementById('litSlider').value;
+            document.documentElement.style.setProperty('--theme-hue', h);
+            document.documentElement.style.setProperty('--theme-sat', s + '%');
+            document.documentElement.style.setProperty('--theme-lit', l + '%');
             
-            isEngineOn = !isEngineOn;
-            
-            if(isEngineOn) {
-                btn.className = 'btn btn-toggle';
-                btn.innerText = 'DISABLE OPTIMIZATION';
-                const r = await fetch('/api/toggle?state=on', {method: 'POST'});
-                const out = await r.json();
-                if (out.error === 'TRIAL_EXPIRED') isEngineOn = false;
-            } else {
-                btn.className = 'btn btn-toggle off';
-                btn.innerText = 'ENABLE OPTIMIZATION';
-                await fetch('/api/toggle?state=off', {method: 'POST'});
-            }
+            fetch('/api/theme', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hue: h, sat: s, lit: l })
+            });
         }
 
         window.onload = () => {

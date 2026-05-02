@@ -31,3 +31,51 @@ Standard Node.js and Python runtimes are notorious for "Ghost Processes" and the
 By running this MCP server locally, you can track revenue, hardware efficiency, and the exact moment an agent attempts to hit the Black Box protocol.
 
 **Bypass Mechanism:** If you are the system admin, place your `MAXION_MASTER_KEY` in the `.env` file, and the gateway will automatically bypass payment walls for your local development workflow.
+
+## Quick Start (NPM / NPX)
+
+You can run the Maxion MCP Gateway directly without installation using `npx`. This is the easiest way to connect your local agents:
+
+```bash
+npx maxion-mcp-gateway
+```
+
+*Ensure your `.env` variables are configured in your working directory.*
+
+## Platform Integrations
+
+### 1. Smithery.ai (Primary MCP Platform)
+
+Maxion is fully compliant with Smithery. To publish or test locally with Smithery's CLI:
+```bash
+npx @smithery/cli run
+```
+You can share your `public_mcp_repo` link directly on Smithery for global agent discovery.
+
+### 2. Claude Desktop & Cursor (Direct MCP)
+
+Add the following to your `claude_desktop_config.json` or Cursor MCP settings:
+```json
+{
+  "mcpServers": {
+    "maxion-core": {
+      "command": "npx",
+      "args": ["-y", "maxion-mcp-gateway"],
+      "env": {
+        "STRIPE_SECRET_KEY": "sk_...",
+        "SUPABASE_URL": "https://...",
+        "SUPABASE_KEY": "...",
+        "STRIPE_PRICE_ID": "price_...",
+        "STRIPE_PAYMENT_LINK": "https://buy.stripe.com/..."
+      }
+    }
+  }
+}
+```
+
+### 3. OpenAI Custom GPTs (Skill / Plugin)
+
+We have included `ai-plugin.json` and `openapi.json` to support OpenAI Custom GPT actions.
+1. Host this repository on a public URL (e.g. `https://mcp.maxion-core.com`).
+2. Point your GPT's Action Schema to the hosted `openapi.json`.
+3. The GPT will automatically read the instructions and enforce the Maxion execution rules.

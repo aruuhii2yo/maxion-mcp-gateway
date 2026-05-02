@@ -120,11 +120,7 @@ app.listen(PORT, () => {
     const { exec } = require('child_process');
     if (process.platform === 'win32') {
         exec(`start msedge --app="${startUrl}"`, (err) => {
-            if (err) {
-                exec(`start chrome --app="${startUrl}"`, (err2) => {
-                    if (err2) exec(`start "${startUrl}"`);
-                });
-            }
+            if (err) exec(`start chrome --app="${startUrl}"`);
         });
     }
 });

@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "maxion-windows-cores": {
+      "command": "node",
+      "args": ["mcp_wrapper.js"],
+      "env": {},
+      "metadata": {
+        "title": "Maxion Windows Cores Gateway",
+        "description": "Premium MCP server providing an ecological Rust engine bridge for autonomous agents. Enforces proactive energy savings and hardware thermal management at the OS level.",
+        "skills": ["get_efficiency_quote", "maxion_execute"],
+        "pricing": {
+          "type": "subscription",
+          "url": "https://buy.stripe.com/5kQcN4ccybvj8HNaLobbG00",
+          "price": "$20.00/mo"
+        }
+      }
+    }
+  }
+}
